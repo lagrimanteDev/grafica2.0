@@ -3,7 +3,73 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const { z } = require('zod');
 const { db } = require('../database');
+
+// ==========================================
+// Validação de Ordem de Serviço com Zod
+// ==========================================
+// Os campos chegam como string (FormData/multipart), então convertemos
+// antes de validar, aceitando também vírgula como separador decimal.
+
+const paraNumero = (v) => Number(String(v ?? '').trim().replace(',', '.'));
+
+const paraNumeroOuZero = (v) => {
+  if (v === undefined || v === null || v === '') return 0;
+  return paraNumero(v);
+};
+
+const paraNumeroOuNull = (v) => {
+  if (v === undefined || v === null || v === '') return null;
+  return paraNumero(v);
+};
+
+const pedidoSchema = z.object({
+  servico_id: z.preprocess(
+    (v) => Math.trunc(paraNumero(v)),
+    z.number({ message: 'Selecione o tipo de produto/serviço.' })
+      .int('Selecione o tipo de produto/serviço.')
+      .positive('Selecione o tipo de produto/serviço.')
+  ),
+  quantidade: z.preprocess(
+    paraNumero,
+    z.number({ message: 'Informe uma quantidade válida.' })
+      .positive('A quantidade deve ser maior que zero.')
+  ),
+  data_prometida: z.string({ message: 'Informe a data prometida de entrega.' })
+    .min(1, 'Informe a data prometida de entrega.'),
+  valor_total: z.preprocess(
+    paraNumeroOuZero,
+    z.number({ message: 'Informe um valor total válido.' })
+      .min(0, 'O valor total não pode ser negativo.')
+  ),
+  dimensao_largura: z.preprocess(
+    paraNumeroOuNull,
+    z.union([
+      z.null(),
+      z.number({ message: 'Informe uma largura válida.' })
+        .nonnegative('As dimensões não podem ser negativas.')
+    ])
+  ),
+  dimensao_altura: z.preprocess(
+    paraNumeroOuNull,
+    z.union([
+      z.null(),
+      z.number({ message: 'Informe uma altura válida.' })
+        .nonnegative('As dimensões não podem ser negativas.')
+    ])
+  ),
+  material: z.preprocess(
+    (v) => (v === undefined ? '' : String(v).trim()),
+    z.string({ message: 'Material inválido.' })
+      .refine((s) => s === '' || s.length >= 3, 'O material deve ter pelo menos 3 caracteres.')
+  )
+});
+
+// Converte os erros do Zod em uma mensagem amigável
+function mensagensValidacao(erro) {
+  return [...new Set(erro.issues.map((i) => i.message))].join(' ');
+}
 
 // Configuração do multer para upload de arte final
 const uploadDir = path.join(__dirname, '..', 'temp_uploads');
@@ -314,10 +380,23 @@ router.post('/', upload.single('arquivo_arte'), async (req, res) => {
       usuario_nome
     } = req.body;
 
-    // Validações
-    if (!servico_id || !quantidade || !data_prometida) {
-      return res.status(400).json({ error: 'Campos obrigatórios: serviço, quantidade e data prometida.' });
+    // Validação com Zod (não permite OS com valor total negativo,
+    // dimensões negativas ou material com menos de 3 caracteres)
+    const validacao = pedidoSchema.safeParse({
+      servico_id,
+      quantidade,
+      data_prometida,
+      valor_total,
+      dimensao_largura,
+      dimensao_altura,
+      material
+    });
+
+    if (!validacao.success) {
+      return res.status(400).json({ error: mensagensValidacao(validacao.error) });
     }
+
+    const dados = validacao.data;
 
     // Criar ou buscar cliente
     let clienteIdFinal = cliente_id;
@@ -360,19 +439,19 @@ router.post('/', upload.single('arquivo_arte'), async (req, res) => {
       [
         numeroOS,
         clienteIdFinal,
-        Number(servico_id),
-        parseFloat(quantidade),
+        dados.servico_id,
+        dados.quantidade,
         unidade || 'un',
-        dimensao_largura ? parseFloat(dimensao_largura) : null,
-        dimensao_altura ? parseFloat(dimensao_altura) : null,
-        material || '',
+        dados.dimensao_largura,
+        dados.dimensao_altura,
+        dados.material,
         acabamento_id ? Number(acabamento_id) : null,
         observacoes_tecnicas || '',
         arquivoArte,
         arquivoOriginal,
         data_prometida,
         hora_prometida || '',
-        parseFloat(valor_total) || 0,
+        dados.valor_total,
         condicao_pagamento || 'Pendente',
         status_pagamento || 'PENDENTE',
         prioridade || 'NORMAL',
@@ -447,6 +526,28 @@ router.put('/:id', upload.single('arquivo_arte'), async (req, res) => {
       usuario_nome
     } = req.body;
 
+    // Validação com Zod (apenas os campos enviados são validados em edição)
+    const camposEnviados = { servico_id, quantidade, data_prometida, valor_total, dimensao_largura, dimensao_altura, material };
+    const camposDefinidos = {};
+    Object.entries(camposEnviados).forEach(([chave, valor]) => {
+      if (valor !== undefined) camposDefinidos[chave] = valor;
+    });
+
+    const validacao = pedidoSchema.partial().safeParse(camposDefinidos);
+    if (!validacao.success) {
+      return res.status(400).json({ error: mensagensValidacao(validacao.error) });
+    }
+    const dados = validacao.data;
+
+    // Usa os valores validados quando enviados; caso contrário mantém os atuais
+    const novoServicoId = 'servico_id' in dados ? dados.servico_id : existente.servico_id;
+    const novaQuantidade = 'quantidade' in dados ? dados.quantidade : existente.quantidade;
+    const novaDataPrometida = 'data_prometida' in dados ? dados.data_prometida : existente.data_prometida;
+    const novaValorTotal = 'valor_total' in dados ? dados.valor_total : existente.valor_total;
+    const novoLargura = 'dimensao_largura' in dados ? dados.dimensao_largura : existente.dimensao_largura;
+    const novoAltura = 'dimensao_altura' in dados ? dados.dimensao_altura : existente.dimensao_altura;
+    const novoMaterial = 'material' in dados ? dados.material : (existente.material || '');
+
     let arquivoArte = existente.arquivo_arte;
     let arquivoOriginal = existente.arquivo_original;
     if (req.file) {
@@ -465,19 +566,19 @@ router.put('/:id', upload.single('arquivo_arte'), async (req, res) => {
       WHERE id = ?`,
       [
         Number(cliente_id),
-        Number(servico_id),
-        parseFloat(quantidade),
+        novoServicoId,
+        novaQuantidade,
         unidade || 'un',
-        dimensao_largura ? parseFloat(dimensao_largura) : null,
-        dimensao_altura ? parseFloat(dimensao_altura) : null,
-        material || '',
+        novoLargura,
+        novoAltura,
+        novoMaterial,
         acabamento_id ? Number(acabamento_id) : null,
         observacoes_tecnicas || '',
         arquivoArte,
         arquivoOriginal,
-        data_prometida,
+        novaDataPrometida,
         hora_prometida || '',
-        parseFloat(valor_total) || 0,
+        novaValorTotal,
         condicao_pagamento || 'Pendente',
         status_pagamento || 'PENDENTE',
         prioridade || 'NORMAL',
@@ -651,7 +752,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// GET /api/pedidos/:id/etiqueta - Gerar dados da etiqueta com QR Code
+// GET /api/pedidos/:id/etiqueta - Gerar dados da etiqueta de produção
 router.get('/:id/etiqueta', async (req, res) => {
   try {
     const id = req.params.id;
@@ -661,6 +762,7 @@ router.get('/:id/etiqueta', async (req, res) => {
         c.nome AS cliente_nome,
         s.nome AS servico_nome,
         e.nome AS etapa_nome,
+        e.icone AS etapa_icone,
         e.ordem AS etapa_ordem
       FROM pedidos p
       JOIN clientes c ON p.cliente_id = c.id
@@ -674,12 +776,8 @@ router.get('/:id/etiqueta', async (req, res) => {
       return res.status(404).json({ error: 'Pedido não encontrado.' });
     }
 
-    // URL para o QR Code (abre direto a tela do pedido)
-    const urlPedido = `${req.protocol}://${req.get('host')}/?pedido=${pedido.id}`;
-
     res.json({
-      ...pedido,
-      url_qr: urlPedido
+      ...pedido
     });
   } catch (error) {
     console.error('Erro ao gerar etiqueta:', error);

@@ -100,6 +100,52 @@ const AtendimentoModule = {
       });
     }
 
+    // Campo de quantidade: tirar o destaque vermelho assim que for corrigido
+    const inputQtdPed = document.getElementById('ped-quantidade');
+    if (inputQtdPed) {
+      inputQtdPed.addEventListener('input', () => {
+        const valido = !!(inputQtdPed.value && parseFloat(inputQtdPed.value) > 0);
+        App.campoInvalido(inputQtdPed, !valido);
+      });
+    }
+
+    // Limpar destaque dos demais campos obrigatórios assim que forem corrigidos
+    const limparCampoPedido = (idElemento) => {
+      const el = document.getElementById(idElemento);
+      if (!el) return;
+      const aoCorrigir = () => {
+        if (el.value && el.value.trim() !== '') {
+          App.campoInvalido(el, false);
+        }
+      };
+      el.addEventListener('input', aoCorrigir);
+      el.addEventListener('change', aoCorrigir);
+    };
+    ['ped-cliente-nome', 'ped-servico-id', 'ped-data-prometida'].forEach(limparCampoPedido);
+
+    // Valor total e dimensões: não podem ser negativas
+    const avaliarCampoNumeroPedido = (idElemento) => {
+      const el = document.getElementById(idElemento);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        const valor = el.value.trim();
+        const numero = Number(valor.replace(',', '.'));
+        const valido = valor === '' || (!isNaN(numero) && numero >= 0);
+        App.campoInvalido(el, !valido);
+      });
+    };
+    ['ped-valor-total', 'ped-dimensao-largura', 'ped-dimensao-altura'].forEach(avaliarCampoNumeroPedido);
+
+    // Material: mínimo de 3 caracteres (quando preenchido)
+    const inputMaterialPedido = document.getElementById('ped-material');
+    if (inputMaterialPedido) {
+      inputMaterialPedido.addEventListener('input', () => {
+        const texto = inputMaterialPedido.value.trim();
+        const valido = texto === '' || texto.length >= 3;
+        App.campoInvalido(inputMaterialPedido, !valido);
+      });
+    }
+
     // Submissão do formulário
     const form = document.getElementById('form-novo-pedido');
     if (form) {
@@ -137,18 +183,51 @@ const AtendimentoModule = {
     // Validações
     if (!clienteNome) {
       App.mostrarToast('Informe o nome do cliente.', 'erro');
+      App.campoInvalido(document.getElementById('ped-cliente-nome'), true);
       return;
     }
     if (!servicoId) {
       App.mostrarToast('Selecione o tipo de produto/serviço.', 'erro');
+      App.campoInvalido(document.getElementById('ped-servico-id'), true);
       return;
     }
     if (!quantidade || parseFloat(quantidade) <= 0) {
       App.mostrarToast('Informe uma quantidade válida.', 'erro');
+      App.campoInvalido(document.getElementById('ped-quantidade'), true);
       return;
     }
     if (!dataPrometida) {
       App.mostrarToast('Informe a data prometida de entrega.', 'erro');
+      App.campoInvalido(document.getElementById('ped-data-prometida'), true);
+      return;
+    }
+
+    // Material com mínimo de 3 caracteres (quando preenchido)
+    if (material && material.trim().length < 3) {
+      App.mostrarToast('O material deve ter pelo menos 3 caracteres.', 'erro');
+      App.campoInvalido(document.getElementById('ped-material'), true);
+      return;
+    }
+
+    // Valor total não pode ser negativo
+    const valorTotalNumero = valorTotal ? Number(String(valorTotal).replace(',', '.')) : 0;
+    if (isNaN(valorTotalNumero) || valorTotalNumero < 0) {
+      App.mostrarToast('O valor total não pode ser negativo.', 'erro');
+      App.campoInvalido(document.getElementById('ped-valor-total'), true);
+      return;
+    }
+
+    // Dimensões não podem ser negativas
+    const larguraNumero = dimensaoLargura ? Number(String(dimensaoLargura).replace(',', '.')) : 0;
+    const alturaNumero = dimensaoAltura ? Number(String(dimensaoAltura).replace(',', '.')) : 0;
+    if (dimensaoLargura && (isNaN(larguraNumero) || larguraNumero < 0)) {
+      App.mostrarToast('As dimensões não podem ser negativas.', 'erro');
+      App.campoInvalido(document.getElementById('ped-dimensao-largura'), true);
+      return;
+    }
+    if (dimensaoAltura && (isNaN(alturaNumero) || alturaNumero < 0)) {
+      App.mostrarToast('As dimensões não podem ser negativas.', 'erro');
+      App.campoInvalido(document.getElementById('ped-dimensao-altura'), true);
       return;
     }
 
@@ -195,6 +274,9 @@ const AtendimentoModule = {
       document.getElementById('ped-cliente-existente').value = '';
       document.getElementById('ped-unidade-badge').textContent = 'un';
       document.getElementById('ped-arquivo-arte').value = '';
+      ['ped-cliente-nome', 'ped-servico-id', 'ped-quantidade', 'ped-data-prometida', 'ped-material', 'ped-valor-total', 'ped-dimensao-largura', 'ped-dimensao-altura'].forEach((id) => {
+        App.campoInvalido(document.getElementById(id), false);
+      });
 
       // Definir nova data prometida padrão
       const d = new Date();
@@ -204,11 +286,6 @@ const AtendimentoModule = {
       // Atualizar lista de últimos pedidos
       await this.carregarUltimosPedidos();
       await this.carregarListas();
-
-      // Oferecer impressão de etiqueta
-      if (confirm('Deseja imprimir a etiqueta com QR Code deste pedido?')) {
-        await KanbanModule.abrirEtiqueta(res.pedido.id);
-      }
     } catch (error) {
       App.mostrarToast(error.message || 'Erro ao criar pedido.', 'erro');
     } finally {
@@ -272,7 +349,7 @@ const AtendimentoModule = {
                 <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Ver detalhes">
                   👁️
                 </button>
-                <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Etiqueta QR Code">
+                <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Etiqueta de Produção">
                   🏷️
                 </button>
               </div>

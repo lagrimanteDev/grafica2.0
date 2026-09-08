@@ -201,7 +201,7 @@ async function seedDatabase(force = false) {
     (1, 'Administrador', 'admin@graficaepa.com', 'admin123', 'ADMIN'),
     (2, 'Atendimento', 'atendimento@graficaepa.com', 'atend123', 'ATENDIMENTO'),
     (3, 'Operador', 'operador@graficaepa.com', 'oper123', 'OPERADOR'),
-    (4, 'Cliente', 'cliente@graficaepa.com', 'cliente123', 'CLIENTE')
+    (4, 'Vendedor', 'vendedor@graficaepa.com', 'vendedor123', 'VENDEDOR')
   `);
 
   // 9. Clientes de exemplo

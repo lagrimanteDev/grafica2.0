@@ -156,6 +156,9 @@ const OperatorModule = {
     this.selectedMaterialId = materialId;
     this.selectedMaterialUnit = unidade;
 
+    // Remover destaque de material não selecionado
+    App.campoInvalido(document.getElementById('op-materiais-grid'), false);
+
     const unidadeBadge = document.getElementById('op-unidade-badge');
     if (unidadeBadge) {
       unidadeBadge.textContent = unidade;
@@ -233,7 +236,27 @@ const OperatorModule = {
       inputQtd.addEventListener('wheel', (e) => {
         e.preventDefault();
       });
+
+      // Remover o destaque vermelho assim que a quantidade for corrigida
+      inputQtd.addEventListener('input', () => {
+        const valido = !!(inputQtd.value && parseFloat(inputQtd.value) > 0);
+        App.campoInvalido(inputQtd, !valido);
+      });
     }
+
+    // Limpar destaque dos demais campos obrigatórios assim que forem corrigidos
+    const limparCampoOperador = (idElemento) => {
+      const el = document.getElementById(idElemento);
+      if (!el) return;
+      const aoCorrigir = () => {
+        if (el.value && el.value.trim() !== '') {
+          App.campoInvalido(el, false);
+        }
+      };
+      el.addEventListener('input', aoCorrigir);
+      el.addEventListener('change', aoCorrigir);
+    };
+    ['op-operador-id', 'op-data', 'op-hora'].forEach(limparCampoOperador);
   },
 
   // Tocar sinal sonoro suave de confirmação (Web Audio API)
@@ -277,15 +300,27 @@ const OperatorModule = {
     }
     if (!operadorId) {
       App.mostrarToast('Por favor, selecione o operador responsável.', 'erro');
+      App.campoInvalido(document.getElementById('op-operador-id'), true);
       return;
     }
     if (!materialId) {
       App.mostrarToast('Por favor, selecione o tipo de material produzido.', 'erro');
+      App.campoInvalido(document.getElementById('op-materiais-grid'), true);
       return;
     }
     if (!quantidade || parseFloat(quantidade) <= 0) {
       App.mostrarToast('Informe uma quantidade válida maior que zero.', 'erro');
-      document.getElementById('op-quantidade').focus();
+      App.campoInvalido(document.getElementById('op-quantidade'), true);
+      return;
+    }
+    if (!data) {
+      App.mostrarToast('Selecione a data do lançamento.', 'erro');
+      App.campoInvalido(document.getElementById('op-data'), true);
+      return;
+    }
+    if (!hora) {
+      App.mostrarToast('Selecione a hora do lançamento.', 'erro');
+      App.campoInvalido(document.getElementById('op-hora'), true);
       return;
     }
 
@@ -312,6 +347,10 @@ const OperatorModule = {
       App.mostrarToast(`✅ Produção de ${quantidade} ${this.selectedMaterialUnit} registrada com sucesso!`, 'sucesso');
 
       // Limpar campos de entrada mantendo operador e turno
+      ['op-quantidade', 'op-observacoes', 'op-tipo-ocorrencia', 'op-operador-id', 'op-data', 'op-hora'].forEach((id) => {
+        App.campoInvalido(document.getElementById(id), false);
+      });
+      App.campoInvalido(document.getElementById('op-materiais-grid'), false);
       document.getElementById('op-quantidade').value = '';
       document.getElementById('op-observacoes').value = '';
       document.getElementById('op-tipo-ocorrencia').value = 'NORMAL';
@@ -386,7 +425,7 @@ const OperatorModule = {
                 <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Ver detalhes">
                   👁️
                 </button>
-                <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Etiqueta QR Code">
+                <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Etiqueta de Produção">
                   🏷️
                 </button>
               </div>
@@ -414,9 +453,15 @@ const OperatorModule = {
       document.getElementById('edit-operador-id').value = reg.operador_id;
       document.getElementById('edit-material-id').value = reg.material_id;
       document.getElementById('edit-quantidade').value = reg.quantidade;
+      App.campoInvalido(document.getElementById('edit-quantidade'), false);
       document.getElementById('edit-unidade').value = reg.unidade;
       document.getElementById('edit-observacoes').value = reg.observacoes || '';
       document.getElementById('edit-tipo-ocorrencia').value = reg.tipo_ocorrencia || 'NORMAL';
+
+      // Limpar destaques de campos inválidos ao reabrir o modal
+      ['edit-data', 'edit-hora', 'edit-turno-id', 'edit-operador-id', 'edit-material-id'].forEach((id) => {
+        App.campoInvalido(document.getElementById(id), false);
+      });
 
       document.getElementById('modal-edicao').classList.remove('hidden');
     } catch (error) {

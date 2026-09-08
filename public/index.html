@@ -36,8 +36,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (XLSX) CDN -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- QR Code Generator CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/style.css" />
@@ -162,7 +160,7 @@
               </div>
             </div>
 
-            <form id="form-novo-pedido" class="space-y-6">
+            <form id="form-novo-pedido" class="space-y-6" novalidate>
               <input type="hidden" id="ped-usuario-id" value="2" />
               <input type="hidden" id="ped-usuario-nome" value="Atendimento" />
 
@@ -211,24 +209,24 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Produto / Serviço *</label>
-                    <select id="ped-servico-id" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                    <select id="ped-servico-id" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
                       <option value="">Carregando serviços...</option>
                     </select>
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Quantidade *</label>
                     <div class="flex items-center space-x-2">
-                      <input type="number" id="ped-quantidade" step="any" min="0.1" placeholder="Ex: 50" required class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800" />
+                      <input type="text" id="ped-quantidade" inputmode="decimal" placeholder="Ex: 50" class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800" />
                       <span id="ped-unidade-badge" class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-xs font-extrabold whitespace-nowrap">un</span>
                     </div>
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Largura (cm)</label>
-                    <input type="number" id="ped-dimensao-largura" step="any" placeholder="Ex: 100" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                    <input type="text" id="ped-dimensao-largura" inputmode="decimal" placeholder="Ex: 100" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Altura (cm)</label>
-                    <input type="number" id="ped-dimensao-altura" step="any" placeholder="Ex: 250" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                    <input type="text" id="ped-dimensao-altura" inputmode="decimal" placeholder="Ex: 250" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Material / Substrato</label>
@@ -261,7 +259,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Data Prometida de Entrega *</label>
-                    <input type="date" id="ped-data-prometida" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                    <input type="date" id="ped-data-prometida" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Hora Prometida</label>
@@ -269,7 +267,7 @@
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Valor Total (R$)</label>
-                    <input type="number" id="ped-valor-total" step="0.01" min="0" placeholder="Ex: 350.00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800" />
+                    <input type="text" id="ped-valor-total" inputmode="decimal" placeholder="Ex: 350.00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800" />
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Condição de Pagamento</label>
@@ -341,7 +339,7 @@
               <li>• O número da OS é gerado <strong>automaticamente</strong>.</li>
               <li>• Anexe a <strong>arte final</strong> para agilizar a produção.</li>
               <li>• O pedido entra na etapa <strong>"Aguardando Pré-Impressão"</strong>.</li>
-              <li>• Após criar, imprima a <strong>etiqueta com QR Code</strong>.</li>
+              <li>• A etiqueta de produção pode ser impressa depois no pedido.</li>
             </ul>
           </div>
         </div>
@@ -558,17 +556,16 @@
     <section id="section-historico" class="tab-content-section hidden space-y-6">
       
       <!-- Painel de Filtros -->
-      <div id="filtros-container" class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+      <div id="filtros-container" class="quadro-card p-5 space-y-4">
         
-        <!-- Botões de Período Rápido -->
-        <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
-          <div class="flex items-center space-x-1 sm:space-x-2 flex-wrap gap-1">
-            <span class="text-xs font-extrabold text-slate-500 uppercase mr-1">Período:</span>
-            <button data-periodo="hoje" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Hoje</button>
-            <button data-periodo="ontem" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Ontem</button>
-            <button data-periodo="7dias" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Últimos 7 dias</button>
-            <button data-periodo="este_mes" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">Este Mês</button>
-            <button data-periodo="todos" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Todos</button>
+        <!-- Cabeçalho do Painel -->
+        <div class="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+              <span>🔎</span>
+              <span>Histórico & Filtros Avançados</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Consulte lançamentos por período, turno, operador e material</p>
           </div>
 
           <!-- Botões de Ação / Exportação -->
@@ -584,18 +581,35 @@
           </div>
         </div>
 
+        <div class="quadro-divider"></div>
+
+        <!-- Botões de Período Rápido + Datas Personalizadas -->
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="flex items-center flex-wrap gap-1.5">
+            <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mr-1">Período rápido:</span>
+            <button data-periodo="hoje" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Hoje</button>
+            <button data-periodo="ontem" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Ontem</button>
+            <button data-periodo="7dias" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Últimos 7 dias</button>
+            <button data-periodo="30dias" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">30 dias</button>
+            <button data-periodo="este_mes" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">Este Mês</button>
+            <button data-periodo="todos" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Todos</button>
+          </div>
+
+          <div class="flex items-end gap-2 flex-wrap">
+            <div class="text-xs font-semibold text-slate-400 pb-1.5" id="filtro-periodo-lbl">Período selecionado</div>
+            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+              <span class="text-[10px] font-extrabold text-slate-500 uppercase">De:</span>
+              <input type="date" id="filtro-data-inicio" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
+              <span class="text-[10px] font-extrabold text-slate-500 uppercase">Até:</span>
+              <input type="date" id="filtro-data-fim" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
+              <button id="btn-filtro-aplicar-periodo" class="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-bold transition">Aplicar</button>
+              <button id="btn-filtro-limpar-periodo" class="px-2 py-1 text-slate-400 hover:text-slate-700 rounded-md text-xs font-bold transition" title="Voltar para Este Mês">✕</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Grid de Filtros Detalhados -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data Início:</label>
-            <input type="date" id="filtro-data-inicio" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data Fim:</label>
-            <input type="date" id="filtro-data-fim" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
-          </div>
-
+        <div class="quadro-filtros-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           <div>
             <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Turno:</label>
             <select id="filtro-turno" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
@@ -618,20 +632,32 @@
           </div>
 
           <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Ocorrência:</label>
+            <select id="filtro-ocorrencia" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
+              <option value="">Todas as Ocorrências</option>
+              <option value="NORMAL">Normal</option>
+              <option value="MANUTENCAO">Manutenção / Limpeza</option>
+              <option value="MATERIAL">Troca de Bobina / Material</option>
+              <option value="AJUSTE">Ajuste de Faca / Regulagem</option>
+              <option value="URGENCIA">Pedido Urgente</option>
+            </select>
+          </div>
+
+          <div>
             <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Texto:</label>
             <input type="text" id="filtro-busca" placeholder="Operador, material, obs..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
           </div>
         </div>
 
         <!-- Totais consolidados no filtro -->
-        <div id="resumo-totais-filtro" class="pt-2 border-t border-slate-100">
+        <div id="resumo-totais-filtro" class="quadro-totais">
           <!-- Inserido dinamicamente via JS -->
         </div>
 
       </div>
 
       <!-- Tabela de Histórico -->
-      <div class="card-grafica bg-white border border-slate-200 overflow-hidden">
+      <div class="quadro-card bg-white overflow-hidden">
         
         <!-- Cabeçalho visível na impressão -->
         <div class="hidden print-only p-4 border-b border-slate-300">
@@ -640,7 +666,7 @@
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
+          <table class="quadro-table w-full text-left text-xs sm:text-sm">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[11px] tracking-wider">
               <tr>
                 <th class="py-3 px-4">Data / Hora</th>
@@ -659,7 +685,7 @@
         </div>
 
         <!-- Paginação -->
-        <div id="paginacao-historico" class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between flex-wrap gap-2 no-print">
+        <div id="paginacao-historico" class="quadro-paginacao p-4 flex items-center justify-between flex-wrap gap-2 no-print">
           <!-- Inserido dinamicamente via JS -->
         </div>
 
@@ -682,12 +708,20 @@
           <p class="text-xs text-slate-500">Métricas comerciais, produtivas e financeiras consolidadas</p>
         </div>
 
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 flex-wrap gap-2">
           <span class="text-xs font-extrabold text-slate-500 uppercase">Análise:</span>
           <button data-dias="7" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">7 Dias</button>
-          <button data-dias="14" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">14 Dias</button>
-          <button data-dias="30" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">30 Dias</button>
+          <button data-dias="30" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">30 Dias</button>
           <button data-dias="todos" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Histórico Todo</button>
+
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+            <span class="text-[10px] font-extrabold text-slate-500 uppercase">De:</span>
+            <input type="date" id="dash-data-inicio" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
+            <span class="text-[10px] font-extrabold text-slate-500 uppercase">Até:</span>
+            <input type="date" id="dash-data-fim" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
+            <button id="btn-dash-aplicar-periodo" class="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-bold transition">Aplicar</button>
+            <button id="btn-dash-limpar-periodo" class="px-2 py-1 text-slate-400 hover:text-slate-700 rounded-md text-xs font-bold transition" title="Voltar para 30 dias">✕</button>
+          </div>
         </div>
       </div>
 
@@ -1205,7 +1239,7 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL DE ETIQUETA COM QR CODE -->
+  <!-- MODAL DE ETIQUETA DE PRODUÇÃO -->
   <!-- ========================================== -->
   <div id="modal-etiqueta" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 fade-in">
@@ -1297,7 +1331,7 @@
           <div>
             <label class="block font-bold text-slate-600 mb-1">Quantidade:</label>
             <div class="flex items-center space-x-1">
-              <input type="number" id="edit-quantidade" step="any" min="0.1" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-blue-700" />
+              <input type="text" id="edit-quantidade" inputmode="decimal" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-blue-700" />
               <input type="text" id="edit-unidade" required class="w-20 bg-slate-100 border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-600" />
             </div>
           </div>
@@ -1352,9 +1386,9 @@
           <span class="block text-2xl mb-1">🏭</span>
           <span class="block text-xs font-extrabold text-slate-800">OPERADOR</span>
         </button>
-        <button type="button" data-perfil="CLIENTE" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-emerald-400 hover:bg-emerald-50">
-          <span class="block text-2xl mb-1">🛎️</span>
-          <span class="block text-xs font-extrabold text-slate-800">CLIENTE</span>
+        <button type="button" data-perfil="VENDEDOR" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-emerald-400 hover:bg-emerald-50">
+          <span class="block text-2xl mb-1">💼</span>
+          <span class="block text-xs font-extrabold text-slate-800">VENDEDOR</span>
         </button>
       </div>
 
@@ -1379,7 +1413,7 @@
         <p class="font-extrabold text-slate-700 uppercase tracking-wider">Credenciais de Demonstração:</p>
         <p>🛡️ <strong>Admin:</strong> admin@graficaepa.com / admin123</p>
         <p>🏭 <strong>Operador:</strong> operador@graficaepa.com / oper123</p>
-        <p>🛎️ <strong>Cliente:</strong> cliente@graficaepa.com / cliente123</p>
+        <p>💼 <strong>Vendedor:</strong> vendedor@graficaepa.com / vendedor123</p>
       </div>
 
     </div>

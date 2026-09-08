@@ -15,18 +15,66 @@ const DashboardModule = {
         this.carregarDashboard(btn.dataset.dias);
       });
     });
+
+    // Período personalizado: 7/30 dias ou data escolhida pelo usuário
+    const btnAplicar = document.getElementById('btn-dash-aplicar-periodo');
+    if (btnAplicar) {
+      btnAplicar.addEventListener('click', () => this.aplicarPeriodoPersonalizado());
+    }
+    const btnLimpar = document.getElementById('btn-dash-limpar-periodo');
+    if (btnLimpar) {
+      btnLimpar.addEventListener('click', () => {
+        document.getElementById('dash-data-inicio').value = '';
+        document.getElementById('dash-data-fim').value = '';
+        document.querySelector('.btn-dash-periodo[data-dias="30"]')?.click();
+      });
+    }
+    ['dash-data-inicio', 'dash-data-fim'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') this.aplicarPeriodoPersonalizado();
+        });
+      }
+    });
+  },
+
+  // Aplicar período com datas personalizadas
+  aplicarPeriodoPersonalizado() {
+    const dataInicio = document.getElementById('dash-data-inicio').value;
+    const dataFim = document.getElementById('dash-data-fim').value;
+
+    if (!dataInicio || !dataFim) {
+      App.mostrarToast('Selecione a data de início e a data fim do período.', 'erro');
+      return;
+    }
+    if (dataInicio > dataFim) {
+      App.mostrarToast('A data de início não pode ser maior que a data fim.', 'erro');
+      return;
+    }
+
+    document.querySelectorAll('.btn-dash-periodo').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+    this.carregarDashboard({ data_inicio: dataInicio, data_fim: dataFim });
   },
 
   // Carregar dados e renderizar gráficos
-  async carregarDashboard(diasAtras = 14) {
+  async carregarDashboard(periodo = 30) {
     try {
-      const dataFim = new Date().toISOString().slice(0, 10);
       let dataInicio = '';
+      let dataFim = '';
 
-      if (diasAtras !== 'todos') {
-        const d = new Date();
-        d.setDate(d.getDate() - parseInt(diasAtras, 10));
-        dataInicio = d.toISOString().slice(0, 10);
+      if (periodo && typeof periodo === 'object') {
+        // Período personalizado (datas escolhidas)
+        dataInicio = periodo.data_inicio || '';
+        dataFim = periodo.data_fim || '';
+      } else if (periodo !== 'todos') {
+        // Períodos fixos: 7, 30 dias...
+        dataFim = new Date().toISOString().slice(0, 10);
+        if (periodo) {
+          const d = new Date();
+          d.setDate(d.getDate() - parseInt(periodo, 10));
+          dataInicio = d.toISOString().slice(0, 10);
+        }
       }
 
       const res = await API.dashboard.obterMetricas({

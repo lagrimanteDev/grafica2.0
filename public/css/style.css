@@ -136,3 +136,83 @@ button:active {
     padding: 6px 8px !important;
   }
 }
+
+/* ==========================================
+   QUADROS DE HISTÓRICO, FILTROS E RELATÓRIOS
+   ========================================== */
+.quadro-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 10px 30px -15px rgba(15, 23, 42, 0.15);
+}
+
+.quadro-divider {
+  border-top: 1px solid #f1f5f9;
+}
+
+.quadro-filtros-grid > div {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quadro-filtros-grid > div:focus-within {
+  background: #ffffff;
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.quadro-filtros-grid label {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.quadro-totais {
+  border-top: 1px solid #eef2f7;
+  background: #f8fafc;
+  border-radius: 0 0 1rem 1rem;
+  margin: 0 -1.25rem -1.25rem;
+  padding: 0.85rem 1.25rem;
+}
+
+.quadro-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+.quadro-table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.quadro-table tbody tr:hover {
+  background-color: #eff6ff;
+}
+
+.quadro-paginacao {
+  background: #f8fafc;
+  border-top: 1px solid #eef2f7;
+}
+/* Destaque de campo inválido (ex.: quantidade) */
+input.campo-invalido,
+select.campo-invalido {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+  animation: shakeCampo 0.3s ease-in-out;
+}
+
+/* Destaque do grid de materiais no lançamento rápido */
+#op-materiais-grid.campo-invalido {
+  border: 2px dashed #ef4444 !important;
+  border-radius: 0.75rem !important;
+  background-color: #fef2f2 !important;
+  padding: 0.5rem;
+}
+
+@keyframes shakeCampo {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}

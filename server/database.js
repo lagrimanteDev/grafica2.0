@@ -164,7 +164,7 @@ async function initDatabase() {
     )
   `);
 
-  // Usuários do sistema (Atendimento, Operador, Administrador)
+  // Usuários do sistema (Atendimento, Operador, Vendedor, Administrador)
   await db.runAsync(`
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -176,6 +176,15 @@ async function initDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
+  `);
+
+  // Migração: o perfil "CLIENTE" foi substituído por "VENDEDOR"
+  // (aplicada sempre que o servidor inicia, para bases já existentes)
+  await db.runAsync(`UPDATE usuarios SET perfil = 'VENDEDOR' WHERE perfil = 'CLIENTE'`);
+  await db.runAsync(`
+    UPDATE usuarios
+    SET nome = 'Vendedor', email = 'vendedor@graficaepa.com', senha = 'vendedor123'
+    WHERE email = 'cliente@graficaepa.com'
   `);
 
   // Etapas do fluxo produtivo (Kanban)

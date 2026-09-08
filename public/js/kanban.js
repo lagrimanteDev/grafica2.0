@@ -142,7 +142,7 @@ const KanbanModule = {
           <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Detalhes">
             👁️
           </button>
-          <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition" title="Etiqueta QR Code">
+          <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition" title="Etiqueta de Produção">
             🏷️
           </button>
           <button onclick="KanbanModule.moverPedido(${ped.id}, ${ped.etapa_atual}, 'avancar')" class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition" title="Avançar etapa">
@@ -394,7 +394,7 @@ const KanbanModule = {
 
         <div class="flex items-center justify-end space-x-2 pt-2">
           <button onclick="KanbanModule.abrirEtiqueta(${pedido.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition">
-            🏷️ Etiqueta QR Code
+            🏷️ Etiqueta de Produção
           </button>
           <button type="button" class="modal-close-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">
             Fechar
@@ -409,7 +409,7 @@ const KanbanModule = {
     }
   },
 
-  // Abrir modal de etiqueta com QR Code
+  // Abrir modal de etiqueta de produção
   async abrirEtiqueta(pedidoId) {
     try {
       const etiqueta = await API.pedidos.etiqueta(pedidoId);
@@ -431,26 +431,8 @@ const KanbanModule = {
           <div class="text-xs text-slate-600 mt-0.5">${etiqueta.servico_nome} • ${etiqueta.quantidade} ${etiqueta.unidade}</div>
           <div class="text-xs text-slate-500 mt-0.5">📅 Entrega: ${dataFormatada}</div>
           <div class="text-xs font-bold text-slate-600 mt-1">Etapa: ${etiqueta.etapa_icone} ${etiqueta.etapa_nome}</div>
-          <div id="qr-code-container" class="mt-3 flex justify-center"></div>
-          <p class="text-[10px] text-slate-400 mt-2">Aponte a câmera para abrir o pedido no sistema</p>
         </div>
       `;
-
-      // Gerar QR Code
-      const qrContainer = document.getElementById('qr-code-container');
-      if (qrContainer && typeof QRCode !== 'undefined') {
-        qrContainer.innerHTML = '';
-        QRCode.toCanvas(qrContainer, etiqueta.url_qr, {
-          width: 180,
-          margin: 2,
-          color: {
-            dark: '#1e293b',
-            light: '#ffffff'
-          }
-        }, (err) => {
-          if (err) console.error('Erro ao gerar QR Code:', err);
-        });
-      }
 
       modal.classList.remove('hidden');
     } catch (error) {
@@ -466,6 +448,7 @@ const KanbanModule = {
     const etiqueta = this.etiquetaAtual;
     const [ano, mes, dia] = (etiqueta.data_prometida || '').split('-');
     const dataFormatada = etiqueta.data_prometida ? `${dia}/${mes}/${ano}` : 'Sem data';
+    const horaFormatada = etiqueta.hora_prometida ? ` às ${etiqueta.hora_prometida}` : '';
 
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     if (!printWindow) {
@@ -492,7 +475,6 @@ const KanbanModule = {
           .cliente { font-size: 14px; font-weight: bold; }
           .info { font-size: 12px; color: #333; margin-top: 4px; }
           .etapa { font-size: 12px; font-weight: bold; margin-top: 8px; }
-          .qr { margin-top: 12px; }
           .rodape { font-size: 9px; color: #666; margin-top: 12px; }
         </style>
       </head>
@@ -502,12 +484,9 @@ const KanbanModule = {
           <div class="os">${etiqueta.numero_os}</div>
           <div class="cliente">${etiqueta.cliente_nome}</div>
           <div class="info">${etiqueta.servico_nome} • ${etiqueta.quantidade} ${etiqueta.unidade}</div>
-          <div class="info">📅 Entrega: ${dataFormatada}</div>
-          <div class="etapa">${etiqueta.etapa_icone} ${etiqueta.etapa_nome}</div>
-          <div class="qr">
-            <img src="${etiqueta.url_qr}" alt="QR Code" style="width: 150px; height: 150px;" />
-          </div>
-          <div class="rodape">Aponte a câmera para abrir o pedido no sistema</div>
+          <div class="info">📅 Entrega: ${dataFormatada}${horaFormatada}</div>
+          <div class="etapa">${etiqueta.etapa_icone || ''} ${etiqueta.etapa_nome}</div>
+          <div class="rodape">Gráfica EPA - Produção</div>
         </div>
         <script>
           window.onload = function() { window.print(); };

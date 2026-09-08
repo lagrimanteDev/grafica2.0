@@ -54,6 +54,26 @@ const SettingsModule = {
       e.preventDefault();
       await this.restaurarBackup();
     });
+
+    // Limpar destaque dos campos de cadastro assim que forem corrigidos
+    const limparCampoConfig = (idElemento) => {
+      const el = document.getElementById(idElemento);
+      if (!el) return;
+      const aoCorrigir = () => {
+        if (el.value && el.value.trim() !== '') {
+          App.campoInvalido(el, false);
+        }
+      };
+      el.addEventListener('input', aoCorrigir);
+      el.addEventListener('change', aoCorrigir);
+    };
+    [
+      'serv-nome', 'serv-unidade',
+      'acab-nome',
+      'user-nome', 'user-email', 'user-senha',
+      'mat-nome', 'mat-unidade',
+      'op-novo-nome'
+    ].forEach(limparCampoConfig);
   },
 
   // ==========================================
@@ -101,10 +121,23 @@ const SettingsModule = {
     const unidade = document.getElementById('serv-unidade').value;
     const categoria = document.getElementById('serv-categoria').value;
 
+    if (!nome) {
+      App.mostrarToast('Informe o nome do serviço.', 'erro');
+      App.campoInvalido(document.getElementById('serv-nome'), true);
+      return;
+    }
+    if (!unidade) {
+      App.mostrarToast('Informe a unidade do serviço.', 'erro');
+      App.campoInvalido(document.getElementById('serv-unidade'), true);
+      return;
+    }
+
     try {
       await API.servicos.criar({ nome, unidade, categoria });
       App.mostrarToast(`Serviço "${nome}" cadastrado com sucesso!`, 'sucesso');
       document.getElementById('form-novo-servico').reset();
+      App.campoInvalido(document.getElementById('serv-nome'), false);
+      App.campoInvalido(document.getElementById('serv-unidade'), false);
       await this.carregarServicos();
       await AtendimentoModule.carregarListas();
     } catch (error) {
@@ -165,10 +198,17 @@ const SettingsModule = {
   async salvarNovoAcabamento() {
     const nome = document.getElementById('acab-nome').value;
 
+    if (!nome) {
+      App.mostrarToast('Informe o nome do acabamento.', 'erro');
+      App.campoInvalido(document.getElementById('acab-nome'), true);
+      return;
+    }
+
     try {
       await API.acabamentos.criar({ nome });
       App.mostrarToast(`Acabamento "${nome}" cadastrado com sucesso!`, 'sucesso');
       document.getElementById('form-novo-acabamento').reset();
+      App.campoInvalido(document.getElementById('acab-nome'), false);
       await this.carregarAcabamentos();
       await AtendimentoModule.carregarListas();
     } catch (error) {
@@ -208,6 +248,7 @@ const SettingsModule = {
         if (u.perfil === 'ADMIN') perfilBadge = 'bg-purple-100 text-purple-800';
         if (u.perfil === 'ATENDIMENTO') perfilBadge = 'bg-blue-100 text-blue-800';
         if (u.perfil === 'OPERADOR') perfilBadge = 'bg-emerald-100 text-emerald-800';
+        if (u.perfil === 'VENDEDOR') perfilBadge = 'bg-amber-100 text-amber-800';
 
         html += `
           <tr class="border-b border-slate-100 hover:bg-slate-50">
@@ -241,10 +282,29 @@ const SettingsModule = {
     const senha = document.getElementById('user-senha').value;
     const perfil = document.getElementById('user-perfil').value;
 
+    if (!nome) {
+      App.mostrarToast('Informe o nome do usuário.', 'erro');
+      App.campoInvalido(document.getElementById('user-nome'), true);
+      return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      App.mostrarToast('Informe um e-mail válido.', 'erro');
+      App.campoInvalido(document.getElementById('user-email'), true);
+      return;
+    }
+    if (!senha) {
+      App.mostrarToast('Informe a senha do usuário.', 'erro');
+      App.campoInvalido(document.getElementById('user-senha'), true);
+      return;
+    }
+
     try {
       await API.usuarios.criar({ nome, email, senha, perfil });
       App.mostrarToast(`Usuário "${nome}" cadastrado com sucesso!`, 'sucesso');
       document.getElementById('form-novo-usuario').reset();
+      ['user-nome', 'user-email', 'user-senha'].forEach((id) => {
+        App.campoInvalido(document.getElementById(id), false);
+      });
       await this.carregarUsuarios();
     } catch (error) {
       App.mostrarToast(error.message || 'Erro ao cadastrar usuário.', 'erro');
@@ -308,10 +368,23 @@ const SettingsModule = {
     const categoria = document.getElementById('mat-categoria').value;
     const meta_hora = document.getElementById('mat-meta').value;
 
+    if (!nome) {
+      App.mostrarToast('Informe o nome do material.', 'erro');
+      App.campoInvalido(document.getElementById('mat-nome'), true);
+      return;
+    }
+    if (!unidade) {
+      App.mostrarToast('Informe a unidade do material.', 'erro');
+      App.campoInvalido(document.getElementById('mat-unidade'), true);
+      return;
+    }
+
     try {
       await API.materiais.criar({ nome, unidade, categoria, meta_hora });
       App.mostrarToast(`Material "${nome}" cadastrado com sucesso!`, 'sucesso');
       document.getElementById('form-novo-material').reset();
+      App.campoInvalido(document.getElementById('mat-nome'), false);
+      App.campoInvalido(document.getElementById('mat-unidade'), false);
       await this.carregarMateriais();
       await OperatorModule.carregarListas();
       HistoryModule.carregarFiltrosSelects();
@@ -378,10 +451,17 @@ const SettingsModule = {
     const cargo = document.getElementById('op-novo-cargo').value;
     const turno_padrao = document.getElementById('op-novo-turno').value;
 
+    if (!nome) {
+      App.mostrarToast('Informe o nome do operador.', 'erro');
+      App.campoInvalido(document.getElementById('op-novo-nome'), true);
+      return;
+    }
+
     try {
       await API.operadores.criar({ nome, cargo, turno_padrao });
       App.mostrarToast(`Operador "${nome}" cadastrado com sucesso!`, 'sucesso');
       document.getElementById('form-novo-operador').reset();
+      App.campoInvalido(document.getElementById('op-novo-nome'), false);
       await this.carregarOperadores();
       await OperatorModule.carregarListas();
       HistoryModule.carregarFiltrosSelects();

@@ -19,7 +19,7 @@ const App = {
     this.checkHealth();
     setInterval(() => this.checkHealth(), 30000);
 
-    // Verificar se veio com ?pedido= na URL (QR Code)
+    // Verificar se veio com ?pedido= na URL (link direto para o pedido)
     const urlParams = new URLSearchParams(window.location.search);
     const pedidoId = urlParams.get('pedido');
     if (pedidoId) {
@@ -63,9 +63,9 @@ const App = {
         } else if (perfil === 'OPERADOR') {
           emailInput.value = 'operador@graficaepa.com';
           senhaInput.value = 'oper123';
-        } else if (perfil === 'CLIENTE') {
-          emailInput.value = 'cliente@graficaepa.com';
-          senhaInput.value = 'cliente123';
+        } else if (perfil === 'VENDEDOR') {
+          emailInput.value = 'vendedor@graficaepa.com';
+          senhaInput.value = 'vendedor123';
         }
       });
     });
@@ -78,6 +78,15 @@ const App = {
         await this.fazerLogin();
       });
     }
+
+    // Limpar destaque dos campos de login assim que forem corrigidos
+    ['login-email', 'login-senha'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        App.campoInvalido(el, false);
+      });
+    });
   },
 
   abrirModalLogin() {
@@ -94,6 +103,17 @@ const App = {
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
     const perfil = document.getElementById('login-perfil').value;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      App.mostrarToast('Informe um e-mail válido.', 'erro');
+      App.campoInvalido(document.getElementById('login-email'), true);
+      return;
+    }
+    if (!senha) {
+      App.mostrarToast('Informe a senha.', 'erro');
+      App.campoInvalido(document.getElementById('login-senha'), true);
+      return;
+    }
 
     try {
       const res = await API.usuarios.login({ email, senha });
@@ -165,8 +185,8 @@ const App = {
       const tabId = tab.dataset.tab;
       tab.classList.remove('hidden');
 
-      if (perfil === 'CLIENTE') {
-        // Cliente: apenas Atendimento (pedidos)
+      if (perfil === 'VENDEDOR') {
+        // Vendedor: apenas Atendimento (pedidos)
         if (tabId !== 'atendimento') {
           tab.classList.add('hidden');
         }
@@ -187,7 +207,7 @@ const App = {
     });
 
     // Navegar para a aba inicial do perfil
-    if (perfil === 'CLIENTE') {
+    if (perfil === 'VENDEDOR') {
       this.navegarPara('atendimento');
     } else if (perfil === 'OPERADOR') {
       this.navegarPara('kanban');
@@ -388,6 +408,17 @@ const App = {
       toast.classList.add('opacity-0', 'translate-y-2');
       setTimeout(() => toast.remove(), 300);
     }, 3500);
+  },
+
+  // Marcar/limpar um campo como inválido (destaca em vermelho até ser corrigido)
+  campoInvalido(input, invalida = true) {
+    if (!input) return;
+    if (invalida) {
+      input.classList.add('campo-invalido');
+      if (typeof input.focus === 'function') input.focus();
+    } else {
+      input.classList.remove('campo-invalido');
+    }
   }
 };
 

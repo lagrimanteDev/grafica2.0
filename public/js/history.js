@@ -59,12 +59,40 @@ const HistoryModule = {
       this.carregarHistorico();
     };
 
-    document.getElementById('filtro-data-inicio')?.addEventListener('change', aplicarFiltros);
-    document.getElementById('filtro-data-fim')?.addEventListener('change', aplicarFiltros);
+    document.getElementById('filtro-data-inicio')?.addEventListener('change', () => {
+      this.atualizarRotuloPeriodo();
+      aplicarFiltros();
+    });
+    document.getElementById('filtro-data-fim')?.addEventListener('change', () => {
+      this.atualizarRotuloPeriodo();
+      aplicarFiltros();
+    });
     document.getElementById('filtro-turno')?.addEventListener('change', aplicarFiltros);
     document.getElementById('filtro-operador')?.addEventListener('change', aplicarFiltros);
     document.getElementById('filtro-material')?.addEventListener('change', aplicarFiltros);
     document.getElementById('filtro-ocorrencia')?.addEventListener('change', aplicarFiltros);
+
+    // Botão Aplicar do período personalizado (De/Até), igual ao Painel de Gestão
+    const btnAplicarPeriodo = document.getElementById('btn-filtro-aplicar-periodo');
+    if (btnAplicarPeriodo) {
+      btnAplicarPeriodo.addEventListener('click', () => this.aplicarPeriodoPersonalizado());
+    }
+    const btnLimparPeriodo = document.getElementById('btn-filtro-limpar-periodo');
+    if (btnLimparPeriodo) {
+      btnLimparPeriodo.addEventListener('click', () => {
+        document.getElementById('filtro-data-inicio').value = '';
+        document.getElementById('filtro-data-fim').value = '';
+        document.querySelector('.btn-periodo-rapido[data-periodo="este_mes"]')?.click();
+      });
+    }
+    ['filtro-data-inicio', 'filtro-data-fim'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') this.aplicarPeriodoPersonalizado();
+        });
+      }
+    });
 
     let searchTimeout = null;
     document.getElementById('filtro-busca')?.addEventListener('input', (e) => {
@@ -74,6 +102,29 @@ const HistoryModule = {
         this.carregarHistorico();
       }, 350);
     });
+
+    // Campo de quantidade do modal de edição: limpar destaque ao corrigir
+    const editQtdInput = document.getElementById('edit-quantidade');
+    if (editQtdInput) {
+      editQtdInput.addEventListener('input', () => {
+        const valido = !!(editQtdInput.value && parseFloat(editQtdInput.value) > 0);
+        App.campoInvalido(editQtdInput, !valido);
+      });
+    }
+
+    // Limpar destaque dos demais campos do modal assim que forem corrigidos
+    const limparCampoEdicao = (idElemento) => {
+      const el = document.getElementById(idElemento);
+      if (!el) return;
+      const aoCorrigir = () => {
+        if (el.value && el.value.trim() !== '') {
+          App.campoInvalido(el, false);
+        }
+      };
+      el.addEventListener('input', aoCorrigir);
+      el.addEventListener('change', aoCorrigir);
+    };
+    ['edit-data', 'edit-hora', 'edit-turno-id', 'edit-operador-id', 'edit-material-id'].forEach(limparCampoEdicao);
 
     // Modal de Edição - Submissão
     const formEdicao = document.getElementById('form-modal-edicao');
@@ -107,6 +158,11 @@ const HistoryModule = {
       d7.setDate(hoje.getDate() - 7);
       dataInicioInput.value = `${d7.getFullYear()}-${pad(d7.getMonth() + 1)}-${pad(d7.getDate())}`;
       dataFimInput.value = hojeStr;
+    } else if (tipo === '30dias') {
+      const d30 = new Date();
+      d30.setDate(hoje.getDate() - 30);
+      dataInicioInput.value = `${d30.getFullYear()}-${pad(d30.getMonth() + 1)}-${pad(d30.getDate())}`;
+      dataFimInput.value = hojeStr;
     } else if (tipo === 'este_mes') {
       const dInicio = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-01`;
       dataInicioInput.value = dInicio;
@@ -115,6 +171,85 @@ const HistoryModule = {
       dataInicioInput.value = '';
       dataFimInput.value = '';
     }
+
+    // Atualizar rótulo do período selecionado
+    this.atualizarRotuloPeriodo();
+
+    this.paginaAtual = 1;
+    this.carregarHistorico();
+  },
+
+  // Atualizar o rótulo do período selecionado
+  atualizarRotuloPeriodo() {
+    const lblPeriodo = document.getElementById('filtro-periodo-lbl');
+    if (!lblPeriodo) return;
+
+    const dataInicio = document.getElementById('filtro-data-inicio')?.value || '';
+    const dataFim = document.getElementById('filtro-data-fim')?.value || '';
+
+    if (!dataInicio && !dataFim) {
+      lblPeriodo.textContent = 'Período selecionado';
+      return;
+    }
+
+    const formatar = (iso) => {
+      if (!iso) return '';
+      const partes = iso.split('-');
+      return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : iso;
+    };
+
+    if (dataInicio && dataFim) {
+      if (dataInicio === dataFim) {
+        lblPeriodo.textContent = `📅 ${formatar(dataInicio)}`;
+      } else {
+        lblPeriodo.textContent = `📅 ${formatar(dataInicio)} até ${formatar(dataFim)}`;
+      }
+    } else if (dataInicio) {
+      lblPeriodo.textContent = `📅 a partir de ${formatar(dataInicio)}`;
+    } else {
+      lblPeriodo.textContent = `📅 até ${formatar(dataFim)}`;
+    }
+  },
+
+  // Aplicar período personalizado com datas informadas (De/Até)
+  aplicarPeriodoPersonalizado() {
+    const dataInicioInput = document.getElementById('filtro-data-inicio');
+    const dataFimInput = document.getElementById('filtro-data-fim');
+    const dataInicio = dataInicioInput.value;
+    const dataFim = dataFimInput.value;
+
+    if (!dataInicio || !dataFim) {
+      App.mostrarToast('Selecione a data de início e a data fim do período.', 'erro');
+      return;
+    }
+    if (dataInicio > dataFim) {
+      App.mostrarToast('A data de início não pode ser maior que a data fim.', 'erro');
+      return;
+    }
+
+    // Remover destaque dos botões de período rápido
+    document.querySelectorAll('.btn-periodo-rapido').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+
+    this.atualizarRotuloPeriodo();
+    this.paginaAtual = 1;
+    this.carregarHistorico();
+  },
+
+  // Limpar todos os filtros e recarregar
+  limparFiltros() {
+    ['filtro-data-inicio', 'filtro-data-fim', 'filtro-busca'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['filtro-turno', 'filtro-operador', 'filtro-material', 'filtro-ocorrencia'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    // Remover destaque dos botões de período rápido
+    document.querySelectorAll('.btn-periodo-rapido').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+
+    this.atualizarRotuloPeriodo();
 
     this.paginaAtual = 1;
     this.carregarHistorico();
@@ -309,6 +444,39 @@ const HistoryModule = {
     const unidade = document.getElementById('edit-unidade').value;
     const observacoes = document.getElementById('edit-observacoes').value;
     const tipo_ocorrencia = document.getElementById('edit-tipo-ocorrencia').value;
+
+    // Validações
+    if (!data) {
+      App.mostrarToast('Informe a data do lançamento.', 'erro');
+      App.campoInvalido(document.getElementById('edit-data'), true);
+      return;
+    }
+    if (!hora) {
+      App.mostrarToast('Informe a hora do lançamento.', 'erro');
+      App.campoInvalido(document.getElementById('edit-hora'), true);
+      return;
+    }
+    if (!turno_id) {
+      App.mostrarToast('Selecione o turno.', 'erro');
+      App.campoInvalido(document.getElementById('edit-turno-id'), true);
+      return;
+    }
+    if (!operador_id) {
+      App.mostrarToast('Selecione o operador.', 'erro');
+      App.campoInvalido(document.getElementById('edit-operador-id'), true);
+      return;
+    }
+    if (!material_id) {
+      App.mostrarToast('Selecione o material.', 'erro');
+      App.campoInvalido(document.getElementById('edit-material-id'), true);
+      return;
+    }
+    if (!quantidade || parseFloat(quantidade) <= 0) {
+      App.mostrarToast('Informe uma quantidade válida maior que zero.', 'erro');
+      App.campoInvalido(document.getElementById('edit-quantidade'), true);
+      return;
+    }
+    App.campoInvalido(document.getElementById('edit-quantidade'), false);
 
     try {
       await API.producao.atualizar(id, {
