@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERP & Dashboard de Produção Gráfica - Gráfica EPA</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS (XLSX) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- QR Code Generator CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOPBAR / CABEÇALHO PRINCIPAL -->
+  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo e Identidade -->
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-white text-xl shadow-inner border border-blue-400">
+            EPA
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-extrabold text-base tracking-wide text-white">GRÁFICA EPA</span>
+              <span class="text-xs bg-blue-900 text-blue-300 font-semibold px-2 py-0.5 rounded border border-blue-700">ERP</span>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">Atendimento, Produção & Gestão</p>
+          </div>
+        </div>
+
+        <!-- Relógio em Tempo Real e Indicador de Turno -->
+        <div class="hidden md:flex items-center space-x-4">
+          <div class="text-right">
+            <div id="relogio-topo" class="font-mono text-base font-bold text-blue-400 tracking-wider">00:00:00</div>
+            <div id="data-topo" class="text-xs text-slate-400">Carregando data...</div>
+          </div>
+          <div id="badge-turno-ativo" class="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-100 text-blue-900 border border-blue-300">
+            Turno
+          </div>
+        </div>
+
+        <!-- Status e Acessibilidade -->
+        <div class="flex items-center space-x-3">
+          <button id="btn-toggle-modo-fabrica" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition" title="Aumentar botões para operadores">
+            <span>👓</span>
+            <span>Chão de Fábrica</span>
+          </button>
+          
+          <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+            <span id="status-indicator-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="status-indicator-text" class="text-slate-300 font-medium hidden sm:inline">Online</span>
+          </div>
+
+          <!-- Botão de Login/Usuário -->
+          <button id="btn-login-usuario" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold border border-blue-500 transition" title="Entrar / Sair do sistema">
+            <span id="login-icon">👤</span>
+            <span id="login-text">Entrar</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- BARRA DE NAVEGAÇÃO ENTRE ABAS -->
+  <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-16 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto no-scrollbar">
+        <button data-tab="atendimento" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition bg-blue-600 text-white shadow-sm">
+          <span class="text-lg">🛎️</span>
+          <span>Atendimento</span>
+        </button>
+
+        <button data-tab="kanban" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
+          <span class="text-lg">📋</span>
+          <span>Chão de Fábrica (Kanban)</span>
+        </button>
+
+        <button data-tab="operador" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
+          <span class="text-lg">📝</span>
+          <span>Lançamento Rápido</span>
+        </button>
+
+        <button data-tab="historico" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
+          <span class="text-lg">📊</span>
+          <span>Histórico & Filtros</span>
+        </button>
+
+        <button data-tab="dashboard" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
+          <span class="text-lg">📈</span>
+          <span>Painel de Gestão</span>
+        </button>
+
+        <button data-tab="configuracoes" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
+          <span class="text-lg">⚙️</span>
+          <span>Configurações</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================== -->
+    <!-- ABA 1: ATENDIMENTO & ENTRADA DE PEDIDOS -->
+    <!-- ========================================== -->
+    <section id="section-atendimento" class="tab-content-section space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Formulário de Cadastro do Pedido -->
+        <div class="lg:col-span-8 space-y-6">
+          <div class="card-grafica p-6 sm:p-8 bg-white border border-slate-200">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+              <div>
+                <h2 class="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
+                  <span>🛎️</span>
+                  <span>Cadastro de Novo Pedido (OS)</span>
+                </h2>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">Preencha os dados do cliente e as especificações do serviço</p>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-bold text-slate-500 uppercase">Nova OS</div>
+                <div id="atend-numero-os-preview" class="text-sm font-black text-blue-700">Gerada automaticamente</div>
+              </div>
+            </div>
+
+            <form id="form-novo-pedido" class="space-y-6">
+              <input type="hidden" id="ped-usuario-id" value="2" />
+              <input type="hidden" id="ped-usuario-nome" value="Atendimento" />
+
+              <!-- 1. DADOS DO CLIENTE -->
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
+                  <span>👤</span>
+                  <span>1. Dados do Cliente</span>
+                </h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Cliente Existente:</label>
+                    <select id="ped-cliente-existente" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                      <option value="">-- Novo Cliente --</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nome / Razão Social *</label>
+                    <input type="text" id="ped-cliente-nome" placeholder="Ex: Padaria Pão Dourado" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Telefone (WhatsApp) *</label>
+                    <input type="text" id="ped-cliente-telefone" placeholder="(11) 98765-4321" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
+                    <input type="email" id="ped-cliente-email" placeholder="cliente@email.com" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div class="flex items-end">
+                    <label class="flex items-center space-x-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                      <input type="checkbox" id="ped-cliente-whatsapp" checked class="w-4 h-4 rounded border-slate-300 text-blue-600" />
+                      <span>Possui WhatsApp</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. ESPECIFICAÇÕES DO SERVIÇO -->
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
+                  <span>🖨️</span>
+                  <span>2. Especificações do Serviço</span>
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Produto / Serviço *</label>
+                    <select id="ped-servico-id" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                      <option value="">Carregando serviços...</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Quantidade *</label>
+                    <div class="flex items-center space-x-2">
+                      <input type="number" id="ped-quantidade" step="any" min="0.1" placeholder="Ex: 50" required class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800" />
+                      <span id="ped-unidade-badge" class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-xs font-extrabold whitespace-nowrap">un</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Largura (cm)</label>
+                    <input type="number" id="ped-dimensao-largura" step="any" placeholder="Ex: 100" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Altura (cm)</label>
+                    <input type="number" id="ped-dimensao-altura" step="any" placeholder="Ex: 250" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Material / Substrato</label>
+                    <input type="text" id="ped-material" placeholder="Ex: Lona 440g, Papel Couché 150g" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Acabamento</label>
+                    <select id="ped-acabamento-id" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                      <option value="">Nenhum</option>
+                    </select>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Observações Técnicas</label>
+                    <textarea id="ped-observacoes" rows="2" placeholder="Instruções específicas de cor, sangria, layout ou refile..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-800"></textarea>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Upload de Arte Final (PDF, CDR, AI, PNG alta resolução)</label>
+                    <input type="file" id="ped-arquivo-arte" accept=".pdf,.cdr,.ai,.png,.jpg,.jpeg,.tiff,.psd,.eps" class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. INFORMAÇÕES FINANCEIRAS E PRAZOS -->
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
+                  <span>💰</span>
+                  <span>3. Informações Financeiras e Prazos</span>
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Data Prometida de Entrega *</label>
+                    <input type="date" id="ped-data-prometida" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Hora Prometida</label>
+                    <input type="time" id="ped-hora-prometida" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Valor Total (R$)</label>
+                    <input type="number" id="ped-valor-total" step="0.01" min="0" placeholder="Ex: 350.00" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-800" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Condição de Pagamento</label>
+                    <select id="ped-condicao-pagamento" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                      <option value="Pendente">Pendente</option>
+                      <option value="Sinal 50%">Sinal 50%</option>
+                      <option value="Pago">Pago</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Status do Pagamento</label>
+                    <select id="ped-status-pagamento" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                      <option value="PENDENTE">Pendente</option>
+                      <option value="SINAL_50">Sinal 50%</option>
+                      <option value="PAGO">Pago</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Prioridade</label>
+                    <select id="ped-prioridade" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800">
+                      <option value="NORMAL">🟢 Normal</option>
+                      <option value="ALTA">🟡 Alta</option>
+                      <option value="URGENTE">🔴 Urgente</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BOTÃO DE SUBMISSÃO -->
+              <div class="pt-2">
+                <button type="submit" id="btn-ped-submit" class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-600/30 flex items-center justify-center transition font-bold text-lg cursor-pointer transform hover:-translate-y-0.5">
+                  <span class="text-2xl mr-2">📦</span>
+                  <span>GERAR ORDEM DE SERVIÇO</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- Coluna Lateral: Últimos Pedidos -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="card-grafica p-5 bg-white border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-1.5">
+                  <span>📦</span>
+                  <span>Últimos Pedidos</span>
+                </h3>
+                <p class="text-xs text-slate-500 font-medium">Ordens de serviço recentes</p>
+              </div>
+              <button onclick="AtendimentoModule.carregarUltimosPedidos()" class="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg transition" title="Atualizar lista">
+                🔄
+              </button>
+            </div>
+
+            <div id="atend-ultimos-pedidos" class="space-y-3">
+              <!-- Inserido dinamicamente via JS -->
+            </div>
+          </div>
+
+          <!-- Card de Dicas -->
+          <div class="p-5 bg-blue-50 border border-blue-200 rounded-2xl text-blue-900 space-y-2">
+            <div class="flex items-center space-x-2 font-extrabold text-sm text-blue-950">
+              <span class="text-lg">💡</span>
+              <span>Dicas de Atendimento</span>
+            </div>
+            <ul class="text-xs space-y-1.5 text-blue-800">
+              <li>• O número da OS é gerado <strong>automaticamente</strong>.</li>
+              <li>• Anexe a <strong>arte final</strong> para agilizar a produção.</li>
+              <li>• O pedido entra na etapa <strong>"Aguardando Pré-Impressão"</strong>.</li>
+              <li>• Após criar, imprima a <strong>etiqueta com QR Code</strong>.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 2: CHÃO DE FÁBRICA & KANBAN -->
+    <!-- ========================================== -->
+    <section id="section-kanban" class="tab-content-section hidden space-y-6">
+      
+      <!-- Topbar do Kanban -->
+      <div class="flex items-center justify-between flex-wrap gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="text-lg font-extrabold text-slate-900 flex items-center space-x-2">
+            <span>🏭</span>
+            <span>Quadro de Produção (Kanban)</span>
+          </h2>
+          <p class="text-xs text-slate-500">Arraste os cards ou use os botões para mover os pedidos entre as etapas</p>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <input type="text" id="kanban-busca" placeholder="Buscar OS, cliente, serviço..." class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 w-56" />
+          <button onclick="KanbanModule.carregarKanban()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+            🔄 Atualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Quadro Kanban -->
+      <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <!-- Inserido dinamicamente via JS -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 3: LANÇAMENTO DO OPERADOR (CHÃO DE FÁBRICA) -->
+    <!-- ========================================== -->
+    <section id="section-operador" class="tab-content-section hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Formulário Principal do Operador -->
+        <div class="lg:col-span-8 space-y-6">
+          <div class="card-grafica p-6 sm:p-8 bg-white border border-slate-200">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+              <div>
+                <h2 class="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
+                  <span>🚀</span>
+                  <span>Registrar Produção Diária</span>
+                </h2>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">Preencha os dados da tiragem ou lote finalizado</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="date" id="op-data" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700" />
+                <input type="time" id="op-hora" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700" />
+              </div>
+            </div>
+
+            <form id="form-operador-producao" class="space-y-6">
+              <input type="hidden" id="op-turno-id" value="1" />
+              <input type="hidden" id="op-tipo-ocorrencia" value="NORMAL" />
+
+              <!-- 1. SELEÇÃO DE TURNO -->
+              <div>
+                <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
+                  1. Selecione o Turno:
+                </label>
+                <div class="grid grid-cols-3 gap-3">
+                  <button type="button" data-turno-id="1" class="btn-turno-select p-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-sm text-slate-800 text-center transition hover:border-amber-400">
+                    <span class="block text-xl mb-0.5">☀️</span>
+                    <span>1º Turno</span>
+                    <span class="block text-[11px] font-normal text-slate-500">06h às 14h</span>
+                  </button>
+                  <button type="button" data-turno-id="2" class="btn-turno-select p-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-sm text-slate-800 text-center transition hover:border-blue-400">
+                    <span class="block text-xl mb-0.5">⛅</span>
+                    <span>2º Turno</span>
+                    <span class="block text-[11px] font-normal text-slate-500">14h às 22h</span>
+                  </button>
+                  <button type="button" data-turno-id="3" class="btn-turno-select p-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-sm text-slate-800 text-center transition hover:border-indigo-400">
+                    <span class="block text-xl mb-0.5">🌙</span>
+                    <span>3º Turno</span>
+                    <span class="block text-[11px] font-normal text-slate-500">22h às 06h</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. SELEÇÃO DE OPERADOR / EQUIPE -->
+              <div>
+                <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
+                  2. Operador / Equipe Responsável:
+                </label>
+                <div class="relative">
+                  <select id="op-operador-id" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-3 text-base font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none transition">
+                    <option value="">Carregando operadores...</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 3. SELEÇÃO DE MATERIAL (GRID COM BOTÕES GRANDES) -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider">
+                    3. Tipo de Material Produzido:
+                  </label>
+                  <span class="text-xs text-blue-600 font-bold">Clique no material correspondente</span>
+                </div>
+                <div id="op-materiais-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <!-- Inserido dinamicamente via JS -->
+                </div>
+              </div>
+
+              <!-- 4. QUANTIDADE PRODUZIDA & ATALHOS -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider">
+                    4. Quantidade Produzida:
+                  </label>
+                  <span class="text-xs font-bold text-slate-600">
+                    Unidade: <span id="op-unidade-badge" class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-extrabold">m²</span>
+                  </span>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                  <input type="text" id="op-quantidade" inputmode="decimal" placeholder="Ex: 50" required class="flex-1 bg-blue-50/50 border-2 border-blue-400 rounded-xl px-5 py-3 text-2xl font-black text-blue-950 focus:bg-white focus:border-blue-600 focus:outline-none transition placeholder-slate-400 text-center" />
+                </div>
+
+                <!-- Botões de Incremento Rápido -->
+                <div class="grid grid-cols-4 gap-2 mt-2">
+                  <button type="button" data-incremento="10" class="btn-incremento py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-extrabold text-xs text-slate-700 border border-slate-300 transition">+10</button>
+                  <button type="button" data-incremento="50" class="btn-incremento py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-extrabold text-xs text-slate-700 border border-slate-300 transition">+50</button>
+                  <button type="button" data-incremento="100" class="btn-incremento py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-extrabold text-xs text-slate-700 border border-slate-300 transition">+100</button>
+                  <button type="button" data-incremento="500" class="btn-incremento py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-extrabold text-xs text-slate-700 border border-slate-300 transition">+500</button>
+                </div>
+              </div>
+
+              <!-- 5. OBSERVAÇÕES E OCORRÊNCIAS RÁPIDAS -->
+              <div>
+                <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
+                  5. Observações / Paradas de Máquina (Opcional):
+                </label>
+                <input type="text" id="op-observacoes" placeholder="Ex: Troca de bobina, refile com corte especial..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none transition" />
+                
+                <!-- Tags de Ocorrência Rápida -->
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  <span class="text-[11px] font-bold text-slate-400 py-1">Atalhos rápidos:</span>
+                  <button type="button" data-texto="Troca de bobina de vinil" data-tipo="MATERIAL" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 rounded-lg border border-slate-200 transition">🏷️ Troca de Bobina</button>
+                  <button type="button" data-texto="Manutenção / Limpeza de cabeças" data-tipo="MANUTENCAO" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-red-100 text-slate-700 hover:text-red-800 rounded-lg border border-slate-200 transition">🛠️ Limpeza / Manutenção</button>
+                  <button type="button" data-texto="Ajuste de faca de corte e refile" data-tipo="AJUSTE" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 rounded-lg border border-slate-200 transition">✂️ Ajuste de Corte</button>
+                  <button type="button" data-texto="Pedido urgente / Prioridade" data-tipo="URGENCIA" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 rounded-lg border border-slate-200 transition">⚡ Demanda Urgente</button>
+                </div>
+              </div>
+
+              <!-- BOTÃO GRANDE DE SUBMISSÃO -->
+              <div class="pt-2">
+                <button type="submit" id="btn-op-submit" class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center transition font-bold text-lg cursor-pointer transform hover:-translate-y-0.5">
+                  <span class="text-2xl mr-2">✅</span>
+                  <span>REGISTRAR PRODUÇÃO</span>
+                  <span class="text-xs bg-emerald-800 text-emerald-100 px-2 py-0.5 rounded ml-3 hidden sm:inline">Enter</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- Coluna Lateral: Pedidos Recentes -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="card-grafica p-5 bg-white border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-1.5">
+                  <span>📦</span>
+                  <span>Pedidos Recentes</span>
+                </h3>
+                <p class="text-xs text-slate-500 font-medium">Ordens de serviço em produção</p>
+              </div>
+              <button onclick="OperatorModule.carregarPedidosRecentes()" class="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg transition" title="Atualizar lista">
+                🔄
+              </button>
+            </div>
+
+            <!-- Lista de cards de pedidos -->
+            <div id="op-pedidos-recentes" class="space-y-3">
+              <!-- Inserido dinamicamente via JS -->
+            </div>
+          </div>
+
+          <!-- Card de Dicas de Treinamento -->
+          <div class="p-5 bg-blue-50 border border-blue-200 rounded-2xl text-blue-900 space-y-2">
+            <div class="flex items-center space-x-2 font-extrabold text-sm text-blue-950">
+              <span class="text-lg">💡</span>
+              <span>Dicas de Uso Rápido</span>
+            </div>
+            <ul class="text-xs space-y-1.5 text-blue-800">
+              <li>• O sistema seleciona o <strong>Turno Atual</strong> automaticamente.</li>
+              <li>• Digite a quantidade e pressione <strong>Enter</strong> para gravar direto.</li>
+              <li>• Errou a digitação? Clique no ícone <strong>✏️ (Lápis)</strong> para corrigir em segundos.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 4: HISTÓRICO E FILTROS AVANÇADOS -->
+    <!-- ========================================== -->
+    <section id="section-historico" class="tab-content-section hidden space-y-6">
+      
+      <!-- Painel de Filtros -->
+      <div id="filtros-container" class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+        
+        <!-- Botões de Período Rápido -->
+        <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
+          <div class="flex items-center space-x-1 sm:space-x-2 flex-wrap gap-1">
+            <span class="text-xs font-extrabold text-slate-500 uppercase mr-1">Período:</span>
+            <button data-periodo="hoje" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Hoje</button>
+            <button data-periodo="ontem" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Ontem</button>
+            <button data-periodo="7dias" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Últimos 7 dias</button>
+            <button data-periodo="este_mes" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">Este Mês</button>
+            <button data-periodo="todos" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Todos</button>
+          </div>
+
+          <!-- Botões de Ação / Exportação -->
+          <div class="flex items-center space-x-2">
+            <button onclick="HistoryModule.exportarExcel()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm transition">
+              <span>📊</span>
+              <span>Exportar Excel (.xlsx)</span>
+            </button>
+            <button onclick="HistoryModule.imprimirRelatorioPDF()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm transition">
+              <span>📄</span>
+              <span>Imprimir / PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid de Filtros Detalhados -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data Início:</label>
+            <input type="date" id="filtro-data-inicio" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data Fim:</label>
+            <input type="date" id="filtro-data-fim" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Turno:</label>
+            <select id="filtro-turno" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
+              <option value="">Todos os Turnos</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Operador:</label>
+            <select id="filtro-operador" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
+              <option value="">Todos os Operadores</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Material:</label>
+            <select id="filtro-material" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
+              <option value="">Todos os Materiais</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Texto:</label>
+            <input type="text" id="filtro-busca" placeholder="Operador, material, obs..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
+          </div>
+        </div>
+
+        <!-- Totais consolidados no filtro -->
+        <div id="resumo-totais-filtro" class="pt-2 border-t border-slate-100">
+          <!-- Inserido dinamicamente via JS -->
+        </div>
+
+      </div>
+
+      <!-- Tabela de Histórico -->
+      <div class="card-grafica bg-white border border-slate-200 overflow-hidden">
+        
+        <!-- Cabeçalho visível na impressão -->
+        <div class="hidden print-only p-4 border-b border-slate-300">
+          <h1 class="text-xl font-extrabold text-slate-900">GRÁFICA EPA - RELATÓRIO DE PRODUÇÃO DIÁRIA</h1>
+          <p class="text-xs text-slate-600">Histórico de Lançamentos de Produção e Turnos</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[11px] tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Data / Hora</th>
+                <th class="py-3 px-4">Turno</th>
+                <th class="py-3 px-4">Operador</th>
+                <th class="py-3 px-4">Material</th>
+                <th class="py-3 px-4 text-right">Volume</th>
+                <th class="py-3 px-4">Observações / Ocorrências</th>
+                <th class="py-3 px-4 text-center no-print">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-historico-corpo">
+              <!-- Inserido dinamicamente via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <div id="paginacao-historico" class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between flex-wrap gap-2 no-print">
+          <!-- Inserido dinamicamente via JS -->
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 5: PAINEL DE GESTÃO & INDICADORES (DASHBOARD) -->
+    <!-- ========================================== -->
+    <section id="section-dashboard" class="tab-content-section hidden space-y-6">
+      
+      <!-- Topbar do Dashboard com Seletor de Período -->
+      <div class="flex items-center justify-between flex-wrap gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="text-lg font-extrabold text-slate-900 flex items-center space-x-2">
+            <span>📈</span>
+            <span>Painel de Desempenho & Indicadores</span>
+          </h2>
+          <p class="text-xs text-slate-500">Métricas comerciais, produtivas e financeiras consolidadas</p>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <span class="text-xs font-extrabold text-slate-500 uppercase">Análise:</span>
+          <button data-dias="7" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">7 Dias</button>
+          <button data-dias="14" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">14 Dias</button>
+          <button data-dias="30" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">30 Dias</button>
+          <button data-dias="todos" class="btn-dash-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Histórico Todo</button>
+        </div>
+      </div>
+
+      <!-- CARDS DE KPIS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Total de Lotes / Jobs</span>
+            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">📦</span>
+          </div>
+          <div id="kpi-total-jobs" class="text-2xl font-black text-slate-900 mt-2">0</div>
+          <span class="text-xs text-emerald-600 font-semibold mt-1 inline-block">100% digitalizado</span>
+        </div>
+
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Dias com Produção</span>
+            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">📅</span>
+          </div>
+          <div id="kpi-dias-trabalhados" class="text-2xl font-black text-slate-900 mt-2">0 dias</div>
+          <span class="text-xs text-slate-500 font-medium mt-1 inline-block">Histórico ativo</span>
+        </div>
+
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Material Líder (Top 1)</span>
+            <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">🏆</span>
+          </div>
+          <div id="kpi-top-material" class="text-lg font-black text-purple-900 mt-2 truncate">Carregando...</div>
+          <span class="text-xs text-purple-600 font-semibold mt-1 inline-block">Maior volume produzido</span>
+        </div>
+
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ocorrências / Paradas</span>
+            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">⚠️</span>
+          </div>
+          <div id="kpi-total-ocorrencias" class="text-2xl font-black text-amber-900 mt-2">0</div>
+          <span class="text-xs text-amber-700 font-medium mt-1 inline-block">Ajustes & Manutenções</span>
+        </div>
+
+      </div>
+
+      <!-- CARDS DE INDICADORES COMERCIAIS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Total de Pedidos (OS)</span>
+            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">🛎️</span>
+          </div>
+          <div id="kpi-total-pedidos" class="text-2xl font-black text-slate-900 mt-2">0</div>
+          <span class="text-xs text-indigo-600 font-semibold mt-1 inline-block">Ordens de serviço no período</span>
+        </div>
+
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Faturamento Total</span>
+            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">💰</span>
+          </div>
+          <div id="kpi-faturamento" class="text-xl font-black text-emerald-700 mt-2">R$ 0,00</div>
+          <span class="text-xs text-emerald-600 font-semibold mt-1 inline-block">Valor total dos pedidos</span>
+        </div>
+
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ticket Médio</span>
+            <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">🎯</span>
+          </div>
+          <div id="kpi-ticket-medio" class="text-xl font-black text-purple-700 mt-2">R$ 0,00</div>
+          <span class="text-xs text-purple-600 font-semibold mt-1 inline-block">Valor médio por pedido</span>
+        </div>
+
+        <div class="card-grafica p-5 bg-white border border-slate-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Cumprimento de Prazos</span>
+            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">⏱️</span>
+          </div>
+          <div id="kpi-taxa-prazo" class="text-2xl font-black text-amber-700 mt-2">0%</div>
+          <span class="text-xs text-amber-600 font-semibold mt-1 inline-block">Entregas no prazo</span>
+        </div>
+
+      </div>
+
+      <!-- INDICADORES COMERCIAIS DETALHADOS -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Pedidos por Serviço -->
+        <div class="lg:col-span-7 card-grafica p-5 bg-white border border-slate-200 space-y-3">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">🛎️ Pedidos por Serviço</h3>
+            <p class="text-xs text-slate-500">Volume e faturamento por tipo de produto</p>
+          </div>
+          <div id="dash-pedidos-servico" class="space-y-2">
+            <!-- Inserido dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- Cumprimento de Prazos -->
+        <div class="lg:col-span-5 card-grafica p-5 bg-white border border-slate-200 space-y-3">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">⏱️ Cumprimento de Prazos</h3>
+            <p class="text-xs text-slate-500">Taxa de entregas no prazo vs. atrasadas</p>
+          </div>
+          <div id="dash-cumprimento-prazos" class="space-y-2">
+            <!-- Inserido dinamicamente via JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- GRÁFICOS (LINHA 1) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Gráfico 1: Evolução Diária da Produção -->
+        <div class="lg:col-span-8 card-grafica p-5 bg-white border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-extrabold text-slate-900 text-sm">📅 Produção Diária (Volume & Lotes)</h3>
+              <p class="text-xs text-slate-500">Comparativo dia a dia da capacidade de entrega</p>
+            </div>
+          </div>
+          <div class="h-72">
+            <canvas id="chart-timeline"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 2: Distribuição por Tipo de Material -->
+        <div class="lg:col-span-4 card-grafica p-5 bg-white border border-slate-200 space-y-3">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">🥧 Volume por Material</h3>
+            <p class="text-xs text-slate-500">Proporção dos itens mais impressos</p>
+          </div>
+          <div class="h-72">
+            <canvas id="chart-materiais"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- GRÁFICOS (LINHA 2) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Gráfico 3: Comparativo por Turno -->
+        <div class="lg:col-span-6 card-grafica p-5 bg-white border border-slate-200 space-y-3">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">⚖️ Rendimento por Turno (1º vs 2º vs 3º)</h3>
+            <p class="text-xs text-slate-500">Jobs concluídos e ocorrências por período</p>
+          </div>
+          <div class="h-64">
+            <canvas id="chart-turnos"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 4: Produção por Operador -->
+        <div class="lg:col-span-6 card-grafica p-5 bg-white border border-slate-200 space-y-3">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">👷 Desempenho por Operador / Equipe</h3>
+            <p class="text-xs text-slate-500">Volume de entregas registradas por colaborador</p>
+          </div>
+          <div class="h-64">
+            <canvas id="chart-operadores"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PAINEL DE IDENTIFICAÇÃO DE GARGALOS -->
+      <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm flex items-center space-x-2">
+              <span>🔍</span>
+              <span>Identificação de Gargalos & Ocorrências de Chão de Fábrica</span>
+            </h3>
+            <p class="text-xs text-slate-500">Histórico de paradas para manutenção, trocas de insumo e ajustes</p>
+          </div>
+        </div>
+
+        <div id="dash-lista-gargalos">
+          <!-- Inserido dinamicamente via JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 6: CADASTROS, CONFIGURAÇÕES E BACKUPS -->
+    <!-- ========================================== -->
+    <section id="section-configuracoes" class="tab-content-section hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Coluna Esquerda: Cadastros -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- 1. Gestão de Serviços / Produtos -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>🛎️</span>
+                  <span>Serviços & Produtos</span>
+                </h3>
+                <p class="text-xs text-slate-500">Categorias disponíveis no formulário de atendimento</p>
+              </div>
+            </div>
+
+            <form id="form-novo-servico" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+              <input type="text" id="serv-nome" placeholder="Nome do Serviço (ex: Placas em PS)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="text" id="serv-unidade" placeholder="Unidade (m², Milheiros, un)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="text" id="serv-categoria" placeholder="Categoria (Opcional)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
+                + Adicionar
+              </button>
+            </form>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2 px-3">Serviço</th>
+                    <th class="py-2 px-3">Unidade</th>
+                    <th class="py-2 px-3">Categoria</th>
+                    <th class="py-2 px-3 text-center">Status</th>
+                    <th class="py-2 px-3 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-servicos-tabela">
+                  <!-- JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2. Gestão de Acabamentos -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>✂️</span>
+                  <span>Acabamentos</span>
+                </h3>
+                <p class="text-xs text-slate-500">Opções de acabamento no formulário de atendimento</p>
+              </div>
+            </div>
+
+            <form id="form-novo-acabamento" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <input type="text" id="acab-nome" placeholder="Nome do Acabamento (ex: Ilhós)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
+                + Adicionar
+              </button>
+            </form>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2 px-3">Acabamento</th>
+                    <th class="py-2 px-3 text-center">Status</th>
+                    <th class="py-2 px-3 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-acabamentos-tabela">
+                  <!-- JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 3. Gestão de Usuários -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>👥</span>
+                  <span>Usuários & Acessos</span>
+                </h3>
+                <p class="text-xs text-slate-500">Contas de atendentes, operadores e administradores</p>
+              </div>
+            </div>
+
+            <form id="form-novo-usuario" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs">
+              <input type="text" id="user-nome" placeholder="Nome Completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="email" id="user-email" placeholder="E-mail" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="password" id="user-senha" placeholder="Senha" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <select id="user-perfil" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-semibold text-slate-800">
+                <option value="ATENDIMENTO">Atendimento</option>
+                <option value="OPERADOR">Operador</option>
+                <option value="ADMIN">Administrador</option>
+              </select>
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
+                + Adicionar
+              </button>
+            </form>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2 px-3">Nome</th>
+                    <th class="py-2 px-3">E-mail</th>
+                    <th class="py-2 px-3">Perfil</th>
+                    <th class="py-2 px-3 text-center">Status</th>
+                    <th class="py-2 px-3 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-usuarios-tabela">
+                  <!-- JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 4. Gestão de Materiais -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>🖨️</span>
+                  <span>Materiais Gráficos</span>
+                </h3>
+                <p class="text-xs text-slate-500">Tipos de impressos e produtos da gráfica</p>
+              </div>
+            </div>
+
+            <form id="form-novo-material" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+              <input type="text" id="mat-nome" placeholder="Nome do Material (ex: Banner)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="text" id="mat-unidade" placeholder="Unidade (m², Milheiros, un)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="text" id="mat-categoria" placeholder="Categoria (Opcional)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="hidden" id="mat-meta" value="0" />
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
+                + Adicionar
+              </button>
+            </form>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2 px-3">Material</th>
+                    <th class="py-2 px-3">Unidade</th>
+                    <th class="py-2 px-3">Categoria</th>
+                    <th class="py-2 px-3 text-center">Status</th>
+                    <th class="py-2 px-3 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-materiais-tabela">
+                  <!-- JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. Gestão de Operadores -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>👷</span>
+                  <span>Operadores & Equipes</span>
+                </h3>
+                <p class="text-xs text-slate-500">Colaboradores do chão de fábrica</p>
+              </div>
+            </div>
+
+            <form id="form-novo-operador" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+              <input type="text" id="op-novo-nome" placeholder="Nome Completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <input type="text" id="op-novo-cargo" placeholder="Cargo / Função" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
+              <select id="op-novo-turno" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-semibold text-slate-800">
+                <option value="1">1º Turno (Manhã)</option>
+                <option value="2">2º Turno (Tarde)</option>
+                <option value="3">3º Turno (Noite)</option>
+              </select>
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
+                + Adicionar
+              </button>
+            </form>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2 px-3">Nome</th>
+                    <th class="py-2 px-3">Cargo</th>
+                    <th class="py-2 px-3">Turno Padrão</th>
+                    <th class="py-2 px-3 text-center">Status</th>
+                    <th class="py-2 px-3 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-operadores-tabela">
+                  <!-- JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Coluna Direita: Auditoria e Backups -->
+        <div class="lg:col-span-5 space-y-6">
+          
+          <!-- Log de Auditoria -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>🔐</span>
+                  <span>Log de Auditoria</span>
+                </h3>
+                <p class="text-xs text-slate-500">Rastreabilidade completa de ações no sistema</p>
+              </div>
+              <button onclick="SettingsModule.carregarAuditoria()" class="text-xs text-blue-600 font-bold hover:underline">Atualizar</button>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <input type="date" id="audit-data-inicio" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-800" />
+              <input type="date" id="audit-data-fim" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-800" />
+              <button onclick="SettingsModule.carregarAuditoria()" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold">Filtrar</button>
+            </div>
+
+            <div id="lista-auditoria-container" class="max-h-80 overflow-y-auto pr-1 space-y-2">
+              <!-- JS -->
+            </div>
+          </div>
+
+          <!-- Central de Backups -->
+          <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                  <span>🛡️</span>
+                  <span>Rotinas de Backup & Segurança</span>
+                </h3>
+                <p class="text-xs text-slate-500">Proteção contra falhas e perda de dados</p>
+              </div>
+            </div>
+
+            <!-- Status do Backup Automático -->
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+              <div class="flex items-center space-x-2 text-emerald-900 font-bold text-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                <span>Backup Automático Diário: ATIVADO</span>
+              </div>
+              <p class="text-[11px] text-emerald-700">
+                O sistema salva uma cópia diária dos registros automaticamente na pasta local <code class="bg-emerald-100 px-1 py-0.5 rounded font-mono">/backups</code>.
+              </p>
+            </div>
+
+            <!-- Botões de Ação de Backup -->
+            <div class="space-y-2">
+              <button id="btn-criar-backup-agora" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2">
+                <span>💾</span>
+                <span>Criar Cópia de Segurança Agora</span>
+              </button>
+
+              <a href="/api/backup/exportar-json" download class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2">
+                <span>📥</span>
+                <span>Exportar Todos os Dados em JSON</span>
+              </a>
+            </div>
+
+            <!-- Restauração de Backup -->
+            <div class="pt-3 border-t border-slate-100">
+              <label class="block text-xs font-extrabold text-slate-700 mb-1">Restaurar Banco a partir de Arquivo:</label>
+              <form id="form-restaurar-backup" class="space-y-2">
+                <input type="file" id="input-arquivo-restauracao" accept=".sqlite" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
+                <button type="submit" class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition">
+                  ⚠️ Restaurar Banco de Dados
+                </button>
+              </form>
+            </div>
+
+            <!-- Lista de Backups Físicos Disponíveis -->
+            <div class="pt-3 border-t border-slate-100">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-extrabold text-slate-700">Backups Salvos no Computador:</span>
+                <button onclick="SettingsModule.carregarListaBackups()" class="text-xs text-blue-600 font-bold hover:underline">Atualizar</button>
+              </div>
+              <div id="lista-backups-container" class="max-h-60 overflow-y-auto pr-1">
+                <!-- JS -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL DE DETALHES DO PEDIDO -->
+  <!-- ========================================== -->
+  <div id="modal-pedido-detalhes" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 space-y-4 fade-in max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+          <span>📦</span>
+          <span id="modal-pedido-titulo">Detalhes do Pedido</span>
+        </h3>
+        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <div id="modal-pedido-conteudo" class="space-y-4">
+        <!-- Inserido dinamicamente via JS -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL DE ETIQUETA COM QR CODE -->
+  <!-- ========================================== -->
+  <div id="modal-etiqueta" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 fade-in">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+          <span>🏷️</span>
+          <span>Etiqueta de Produção</span>
+        </h3>
+        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <div id="etiqueta-conteudo" class="text-center space-y-3">
+        <!-- Inserido dinamicamente via JS -->
+      </div>
+
+      <div class="flex items-center justify-center space-x-2 pt-2">
+        <button onclick="KanbanModule.imprimirEtiqueta()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow transition">
+          🖨️ Imprimir Etiqueta
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL DE CORREÇÃO / EDIÇÃO RÁPIDA -->
+  <!-- ========================================== -->
+  <div id="modal-edicao" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 fade-in">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+          <span>✏️</span>
+          <span>Corrigir Lançamento de Produção</span>
+        </h3>
+        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <form id="form-modal-edicao" class="space-y-3.5 text-xs">
+        <input type="hidden" id="edit-id" />
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Data:</label>
+            <input type="date" id="edit-data" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Hora:</label>
+            <input type="time" id="edit-hora" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Turno:</label>
+            <select id="edit-turno-id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800">
+              <option value="1">1º Turno (Manhã)</option>
+              <option value="2">2º Turno (Tarde)</option>
+              <option value="3">3º Turno (Noite)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Operador:</label>
+            <select id="edit-operador-id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800">
+              <option value="1">Carlos Henrique</option>
+              <option value="2">Marcos Souza</option>
+              <option value="3">Ana Paula Silva</option>
+              <option value="4">Roberto Mendes</option>
+              <option value="5">Juliana Costa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Material:</label>
+            <select id="edit-material-id" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800">
+              <option value="1">Banners em Lona</option>
+              <option value="2">Panfletos Promocionais</option>
+              <option value="3">Cartões de Visita</option>
+              <option value="4">Adesivos em Vinil</option>
+              <option value="5">Folders e Catálogos</option>
+              <option value="6">Envelopes Personalizados</option>
+              <option value="7">Faixas e Testeiras</option>
+              <option value="8">Rótulos e Etiquetas</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Quantidade:</label>
+            <div class="flex items-center space-x-1">
+              <input type="number" id="edit-quantidade" step="any" min="0.1" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-blue-700" />
+              <input type="text" id="edit-unidade" required class="w-20 bg-slate-100 border border-slate-300 rounded-lg p-2 text-center font-bold text-slate-600" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Tipo de Ocorrência:</label>
+          <select id="edit-tipo-ocorrencia" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-800">
+            <option value="NORMAL">Normal / Sem Intercorrências</option>
+            <option value="MANUTENCAO">Manutenção / Limpeza</option>
+            <option value="MATERIAL">Troca de Bobina / Material</option>
+            <option value="AJUSTE">Ajuste de Faca / Regulagem</option>
+            <option value="URGENCIA">Pedido Urgente / Prioritário</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Observações:</label>
+          <input type="text" id="edit-observacoes" placeholder="Observações do lote..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium text-slate-800" />
+        </div>
+
+        <div class="pt-3 flex items-center justify-end space-x-2">
+          <button type="button" class="modal-close-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition">Salvar Alterações</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL DE LOGIN -->
+  <!-- ========================================== -->
+  <div id="modal-login" class="modal-container fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 fade-in">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
+          <span>🔐</span>
+          <span>Login do Sistema</span>
+        </h3>
+        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <!-- Opções de Perfil -->
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" data-perfil="ADMIN" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-purple-400 hover:bg-purple-50">
+          <span class="block text-2xl mb-1">🛡️</span>
+          <span class="block text-xs font-extrabold text-slate-800">ADMINISTRADOR</span>
+        </button>
+        <button type="button" data-perfil="OPERADOR" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-blue-400 hover:bg-blue-50">
+          <span class="block text-2xl mb-1">🏭</span>
+          <span class="block text-xs font-extrabold text-slate-800">OPERADOR</span>
+        </button>
+        <button type="button" data-perfil="CLIENTE" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-emerald-400 hover:bg-emerald-50">
+          <span class="block text-2xl mb-1">🛎️</span>
+          <span class="block text-xs font-extrabold text-slate-800">CLIENTE</span>
+        </button>
+      </div>
+
+      <!-- Formulário de Login -->
+      <form id="form-login" class="space-y-3">
+        <input type="hidden" id="login-perfil" value="ADMIN" />
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">E-mail:</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Senha:</label>
+          <input type="password" id="login-senha" placeholder="Sua senha" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow transition">
+          🔓 Entrar no Sistema
+        </button>
+      </form>
+
+      <!-- Credenciais de demonstração -->
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 space-y-1">
+        <p class="font-extrabold text-slate-700 uppercase tracking-wider">Credenciais de Demonstração:</p>
+        <p>🛡️ <strong>Admin:</strong> admin@graficaepa.com / admin123</p>
+        <p>🏭 <strong>Operador:</strong> operador@graficaepa.com / oper123</p>
+        <p>🛎️ <strong>Cliente:</strong> cliente@graficaepa.com / cliente123</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER PARA NOTIFICAÇÕES -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- SCRIPTS DA APLICAÇÃO -->
+  <script src="/js/api.js"></script>
+  <script src="/js/atendimento.js"></script>
+  <script src="/js/kanban.js"></script>
+  <script src="/js/operator.js"></script>
+  <script src="/js/history.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
