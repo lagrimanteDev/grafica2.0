@@ -145,9 +145,10 @@ const KanbanModule = {
           <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition" title="Etiqueta de Produção">
             🏷️
           </button>
-          <button onclick="KanbanModule.moverPedido(${ped.id}, ${ped.etapa_atual}, 'avancar')" class="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition" title="Avançar etapa">
-            ➡️
-          </button>
+          ${this.ehAdministrador() ? `
+          <button onclick="KanbanModule.excluirPedido(${ped.id})" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition" title="Excluir pedido">
+            🗑️
+          </button>` : ''}
         </div>
       </div>
     `;
@@ -255,11 +256,170 @@ const KanbanModule = {
     this.renderizarKanban(etapasFiltradas);
   },
 
+  // Excluir pedido do quadro (somente administrador)
+  async excluirPedido(pedidoId) {
+    if (!this.ehAdministrador()) {
+      App.mostrarToast('Apenas administradores podem excluir pedidos.', 'erro');
+      return;
+    }
+
+    const pedido = this.pedidosCache.find((p) => p.id === pedidoId);
+    if (!pedido) return;
+
+    if (!confirm(`Tem certeza que deseja excluir o pedido ${pedido.numero_os}?\nO pedido será marcado como CANCELADO e removido do quadro.`)) {
+      return;
+    }
+
+    try {
+      const usuario = App.usuarioAtual || {};
+      await API.pedidos.excluir(pedidoId, {
+        usuario_id: usuario.id,
+        usuario_nome: usuario.nome,
+        perfil: usuario.perfil
+      });
+      App.mostrarToast('Pedido excluído com sucesso!', 'sucesso');
+      await this.carregarKanban();
+    } catch (error) {
+      App.mostrarToast(error.message || 'Erro ao excluir pedido.', 'erro');
+    }
+  },
+
+  // Verifica se o usuário logado possui perfil de administrador
+  ehAdministrador() {
+    return !!(App.usuarioAtual && App.usuarioAtual.perfil === 'ADMIN');
+  },
+
+  // Imprimir pedido completo (Ordem de Serviço)
+  async imprimirPedido(pedidoId = null) {
+    let pedido = this.pedidoAtual;
+
+    // Quando chamado sem abrir antes o modal, busca pelo id
+    if (pedidoId) {
+      try {
+        pedido = await API.pedidos.obter(pedidoId);
+        this.pedidoAtual = pedido;
+      } catch (error) {
+        console.error('Erro ao carregar pedido para impressão:', error);
+        App.mostrarToast('Erro ao carregar o pedido.', 'erro');
+        return;
+      }
+    }
+
+    if (!pedido) return;
+
+    const [ano, mes, dia] = (pedido.data_prometida || '').split('-');
+    const dataPrevista = pedido.data_prometida ? `${dia}/${mes}/${ano}` : 'Não informada';
+    const horaPrevista = pedido.hora_prometida || 'Não informada';
+
+    const valorFormatado = `R$ ${Number(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const whatsapp = pedido.cliente_whatsapp ? 'Sim' : 'Não';
+
+    const printWindow = window.open('', '_blank', 'width=820,height=900');
+    if (!printWindow) {
+      App.mostrarToast('Permita pop-ups para imprimir o pedido.', 'erro');
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Pedido ${pedido.numero_os}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1e293b; padding: 24px; background: #fff; }
+          .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 16px; }
+          .marca { font-size: 16px; font-weight: 900; color: #1d4ed8; text-transform: uppercase; letter-spacing: 1px; }
+          .marca small { display: block; font-size: 10px; font-weight: 400; color: #64748b; text-transform: none; letter-spacing: 0; margin-top: 2px; }
+          .numero-os { text-align: right; }
+          .numero-os .lbl { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+          .numero-os .os { font-size: 22px; font-weight: 900; color: #1e293b; }
+          h3 { font-size: 11px; text-transform: uppercase; color: #1d4ed8; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px; }
+          .bloco { margin-bottom: 16px; }
+          .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+          .campo .lbl { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; }
+          .campo .val { font-size: 12px; font-weight: 700; color: #1e293b; }
+          .obs { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; font-size: 12px; color: #334155; }
+          .rodape { border-top: 2px solid #e2e8f0; margin-top: 20px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+          .destaque { font-size: 14px; font-weight: 900; color: #1d4ed8; }
+          .linha { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
+        </style>
+      </head>
+      <body>
+        <div class="cabecalho">
+          <div class="marca">
+            Gráfica EPA
+            <small>Ordem de Serviço - Detalhamento completo do pedido</small>
+          </div>
+          <div class="numero-os">
+            <div class="lbl">Nº da OS</div>
+            <div class="os">${pedido.numero_os}</div>
+          </div>
+        </div>
+
+        <div class="bloco">
+          <h3>Dados do Cliente</h3>
+          <div class="grade">
+            <div class="campo"><div class="lbl">Nome</div><div class="val">${pedido.cliente_nome || '—'}</div></div>
+            <div class="campo"><div class="lbl">Telefone</div><div class="val">${pedido.cliente_telefone || 'Não informado'}</div></div>
+            <div class="campo"><div class="lbl">E-mail</div><div class="val">${pedido.cliente_email || 'Não informado'}</div></div>
+            <div class="campo"><div class="lbl">WhatsApp</div><div class="val">${whatsapp}</div></div>
+          </div>
+        </div>
+
+        <div class="bloco">
+          <h3>Especificações Técnicas</h3>
+          <div class="grade">
+            <div class="campo"><div class="lbl">Produto / Serviço</div><div class="val">${pedido.servico_nome || '—'}</div></div>
+            <div class="campo"><div class="lbl">Quantidade</div><div class="val">${pedido.quantidade} ${pedido.unidade || 'un'}</div></div>
+            <div class="campo"><div class="lbl">Dimensões</div><div class="val">${pedido.dimensao_largura != null && pedido.dimensao_altura != null ? `${pedido.dimensao_largura} x ${pedido.dimensao_altura} cm` : 'Não especificado'}</div></div>
+            <div class="campo"><div class="lbl">Acabamento</div><div class="val">${pedido.acabamento_nome || 'Nenhum'}</div></div>
+            <div class="campo"><div class="lbl">Material</div><div class="val">${pedido.material || 'Não especificado'}</div></div>
+            <div class="campo"><div class="lbl">Etapa Atual</div><div class="val">${pedido.etapa_nome || '—'}</div></div>
+          </div>
+          <div class="campo" style="margin-top:8px;"><div class="lbl">Arte Final</div><div class="val">${pedido.arquivo_original || 'Nenhum arquivo anexado'}</div></div>
+        </div>
+
+        <div class="bloco">
+          <h3>Observações Técnicas</h3>
+          <div class="obs">${pedido.observacoes_tecnicas || 'Sem observações'}</div>
+        </div>
+
+        <div class="bloco">
+          <h3>Informações Financeiras</h3>
+          <div class="linha"><span class="lbl">Valor Total</span><span class="destaque">${valorFormatado}</span></div>
+          <div class="linha"><span class="lbl">Condição de Pagamento</span><span class="val">${pedido.condicao_pagamento || 'Pendente'}</span></div>
+          <div class="linha"><span class="lbl">Status do Pagamento</span><span class="val">${pedido.status_pagamento === 'PAGO' ? 'Pago' : pedido.status_pagamento === 'SINAL_50' ? 'Sinal 50%' : 'Pendente'}</span></div>
+          <div class="linha"><span class="lbl">Prioridade</span><span class="val">${pedido.prioridade || 'Normal'}</span></div>
+        </div>
+
+        <div class="bloco">
+          <h3>Prazo de Entrega</h3>
+          <div class="grade">
+            <div class="campo"><div class="lbl">Data Prevista de Entrega</div><div class="val destaque">${dataPrevista}</div></div>
+            <div class="campo"><div class="lbl">Hora Prevista de Entrega</div><div class="val destaque">${horaPrevista}</div></div>
+          </div>
+        </div>
+
+        <div class="rodape">
+          <span>Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span>Gráfica EPA - Controle de Produção</span>
+        </div>
+        <script>
+          window.onload = function() { window.print(); };
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  },
+
   // Abrir detalhes do pedido
   async abrirDetalhes(pedidoId) {
     try {
       const pedido = await API.pedidos.obter(pedidoId);
       if (!pedido) return;
+
+      this.pedidoAtual = pedido;
 
       const modal = document.getElementById('modal-pedido-detalhes');
       const titulo = document.getElementById('modal-pedido-titulo');
@@ -361,7 +521,7 @@ const KanbanModule = {
 
         <div class="grid grid-cols-2 gap-3">
           <div class="p-3 bg-slate-50 rounded-xl">
-            <p class="text-[10px] font-bold text-slate-500 uppercase">Entrega Prometida</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase">Entrega Prevista</p>
             <p class="text-sm font-bold text-slate-800">📅 ${dataFormatada} ${pedido.hora_prometida ? `às ${pedido.hora_prometida}` : ''}</p>
           </div>
           <div class="p-3 bg-slate-50 rounded-xl">
@@ -393,6 +553,9 @@ const KanbanModule = {
         ${historicoHtml}
 
         <div class="flex items-center justify-end space-x-2 pt-2">
+          <button onclick="KanbanModule.imprimirPedido()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition">
+            🖨️ Imprimir Pedido
+          </button>
           <button onclick="KanbanModule.abrirEtiqueta(${pedido.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition">
             🏷️ Etiqueta de Produção
           </button>

@@ -403,32 +403,41 @@ const OperatorModule = {
 
         let prioridadeBadge = '';
         if (ped.prioridade === 'URGENTE') {
-          prioridadeBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800">🔴 Urgente</span>';
+          prioridadeBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-800">🔴 Urgente</span>';
         } else if (ped.prioridade === 'ALTA') {
-          prioridadeBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">🟡 Alta</span>';
+          prioridadeBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">🟡 Alta</span>';
+        }
+
+        // Status do pedido
+        let statusBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800">En Produção</span>';
+        if (ped.status === 'CANCELADO') {
+          statusBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-800">Cancelado</span>';
+        } else if (ped.concluido_em) {
+          statusBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Concluído</span>';
         }
 
         html += `
-          <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-blue-300 transition-all">
+          <div class="p-3.5 bg-white border border-[#DDE3EC] rounded-xl shadow-sm hover:border-[#3158D8] transition-all">
             <div class="flex items-center justify-between mb-1.5">
               <span class="font-black text-blue-700 text-sm">${ped.numero_os}</span>
               <div class="flex items-center space-x-1">
+                ${statusBadge}
                 ${prioridadeBadge}
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">${ped.etapa_nome}</span>
               </div>
             </div>
             <div class="text-xs text-slate-600 font-semibold">${ped.cliente_nome}</div>
             <div class="text-xs text-slate-500 mt-0.5">${ped.servico_nome} • ${ped.quantidade} ${ped.unidade}</div>
-            <div class="flex items-center justify-between mt-2">
+            <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">${ped.etapa_nome}</span>
               <span class="text-[10px] text-slate-400">📅 Entrega: ${dataFormatada}</span>
-              <div class="flex items-center space-x-1">
-                <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Ver detalhes">
-                  👁️
-                </button>
-                <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Etiqueta de Produção">
-                  🏷️
-                </button>
-              </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 mt-2">
+              <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="px-3 py-1.5 bg-white border border-[#D0D5DD] text-[#344054] hover:border-[#3158D8] hover:text-[#3158D8] rounded-lg text-xs font-bold transition">
+                Visualizar
+              </button>
+              <button onclick="KanbanModule.imprimirPedido(${ped.id})" class="px-3 py-1.5 bg-[#3158D8] hover:bg-[#2446B8] text-white rounded-lg text-xs font-bold transition">
+                Imprimir
+              </button>
             </div>
           </div>
         `;

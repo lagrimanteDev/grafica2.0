@@ -36,8 +36,8 @@ const pedidoSchema = z.object({
     z.number({ message: 'Informe uma quantidade válida.' })
       .positive('A quantidade deve ser maior que zero.')
   ),
-  data_prometida: z.string({ message: 'Informe a data prometida de entrega.' })
-    .min(1, 'Informe a data prometida de entrega.'),
+  data_prometida: z.string({ message: 'Informe a data prevista de entrega.' })
+    .min(1, 'Informe a data prevista de entrega.'),
   valor_total: z.preprocess(
     paraNumeroOuZero,
     z.number({ message: 'Informe um valor total válido.' })
@@ -716,7 +716,12 @@ router.post('/:id/mover', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const { usuario_id, usuario_nome } = req.body;
+    const { usuario_id, usuario_nome, perfil } = req.body;
+
+    // Segurança: somente administradores podem excluir pedidos
+    if (perfil !== 'ADMIN') {
+      return res.status(403).json({ error: 'Apenas administradores podem excluir pedidos.' });
+    }
 
     const pedido = await db.getAsync('SELECT * FROM pedidos WHERE id = ?', [id]);
     if (!pedido) {

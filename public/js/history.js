@@ -6,101 +6,77 @@ const HistoryModule = {
   dadosAtuais: [],
 
   async init() {
-    this.carregarFiltrosSelects();
     this.setupEventListeners();
-    this.definirPeriodoRapido('este_mes');
-    await this.carregarHistorico();
+    this.definirPeriodo('30');
   },
 
-  // Carregar opções nos selects de filtro
-  carregarFiltrosSelects() {
-    // Operadores
-    const opSelect = document.getElementById('filtro-operador');
-    if (opSelect && OperatorModule.operadoresCache.length > 0) {
-      opSelect.innerHTML = '<option value="">Todos os Operadores</option>';
-      OperatorModule.operadoresCache.forEach((op) => {
-        opSelect.innerHTML += `<option value="${op.id}">${op.nome}</option>`;
-      });
-    }
+  // Calcula o intervalo de datas dos períodos rápidos (7/30 dias / Todos)
+  calcularRangoPeriodo(dias) {
+    this.dataInicio = '';
+    this.dataFim = '';
 
-    // Materiais
-    const matSelect = document.getElementById('filtro-material');
-    if (matSelect && OperatorModule.materiaisCache.length > 0) {
-      matSelect.innerHTML = '<option value="">Todos os Materiais</option>';
-      OperatorModule.materiaisCache.forEach((mat) => {
-        matSelect.innerHTML += `<option value="${mat.id}">${mat.nome}</option>`;
-      });
-    }
+    if (!dias || dias === 'todos') return;
 
-    // Turnos
-    const turnoSelect = document.getElementById('filtro-turno');
-    if (turnoSelect && OperatorModule.turnosCache.length > 0) {
-      turnoSelect.innerHTML = '<option value="">Todos os Turnos</option>';
-      OperatorModule.turnosCache.forEach((t) => {
-        turnoSelect.innerHTML += `<option value="${t.id}">${t.nome}</option>`;
-      });
-    }
+    const hoje = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    this.dataFim = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
+    const d = new Date();
+    d.setDate(hoje.getDate() - parseInt(dias, 10));
+    this.dataInicio = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   },
 
-  // Configurar listeners de filtro e busca
+  // Aplica um período rápido (mesmo comportamento do Painel de Gestão)
+  definirPeriodo(periodo) {
+    document.querySelectorAll('.btn-hist-periodo').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+    const btnAtivo = document.querySelector(`.btn-hist-periodo[data-dias="${periodo}"]`);
+    if (btnAtivo) {
+      btnAtivo.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+    }
+
+    this.calcularRangoPeriodo(periodo);
+
+    const dataInicioInput = document.getElementById('hist-data-inicio');
+    const dataFimInput = document.getElementById('hist-data-fim');
+    if (dataInicioInput) dataInicioInput.value = this.dataInicio;
+    if (dataFimInput) dataFimInput.value = this.dataFim;
+
+    this.atualizarRotuloPeriodo();
+    this.paginaAtual = 1;
+    this.carregarHistorico();
+  },
+
+  // Método mantido por compatibilidade (os filtros avançados foram removidos)
+  carregarFiltrosSelects() {},
+
+  // Configurar listeners (modal de edição e período)
   setupEventListeners() {
-    // Botões de período rápido
-    document.querySelectorAll('.btn-periodo-rapido').forEach((btn) => {
+    // Botões de período rápido (estilo Painel de Gestão)
+    document.querySelectorAll('.btn-hist-periodo').forEach((btn) => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.btn-periodo-rapido').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
-        btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-        this.definirPeriodoRapido(btn.dataset.periodo);
+        this.definirPeriodo(btn.dataset.dias);
       });
     });
 
-    // Inputs de filtro com debounce na busca
-    const aplicarFiltros = () => {
-      this.paginaAtual = 1;
-      this.carregarHistorico();
-    };
-
-    document.getElementById('filtro-data-inicio')?.addEventListener('change', () => {
-      this.atualizarRotuloPeriodo();
-      aplicarFiltros();
-    });
-    document.getElementById('filtro-data-fim')?.addEventListener('change', () => {
-      this.atualizarRotuloPeriodo();
-      aplicarFiltros();
-    });
-    document.getElementById('filtro-turno')?.addEventListener('change', aplicarFiltros);
-    document.getElementById('filtro-operador')?.addEventListener('change', aplicarFiltros);
-    document.getElementById('filtro-material')?.addEventListener('change', aplicarFiltros);
-    document.getElementById('filtro-ocorrencia')?.addEventListener('change', aplicarFiltros);
-
-    // Botão Aplicar do período personalizado (De/Até), igual ao Painel de Gestão
-    const btnAplicarPeriodo = document.getElementById('btn-filtro-aplicar-periodo');
+    // Botão Aplicar (período personalizado De/Até)
+    const btnAplicarPeriodo = document.getElementById('btn-hist-aplicar-periodo');
     if (btnAplicarPeriodo) {
       btnAplicarPeriodo.addEventListener('click', () => this.aplicarPeriodoPersonalizado());
     }
-    const btnLimparPeriodo = document.getElementById('btn-filtro-limpar-periodo');
+
+    // Botão Limpar (voltar para 30 dias)
+    const btnLimparPeriodo = document.getElementById('btn-hist-limpar-periodo');
     if (btnLimparPeriodo) {
-      btnLimparPeriodo.addEventListener('click', () => {
-        document.getElementById('filtro-data-inicio').value = '';
-        document.getElementById('filtro-data-fim').value = '';
-        document.querySelector('.btn-periodo-rapido[data-periodo="este_mes"]')?.click();
-      });
+      btnLimparPeriodo.addEventListener('click', () => this.limparPeriodo());
     }
-    ['filtro-data-inicio', 'filtro-data-fim'].forEach((id) => {
+
+    // Enter nos campos de data aplica o período
+    ['hist-data-inicio', 'hist-data-fim'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') this.aplicarPeriodoPersonalizado();
         });
       }
-    });
-
-    let searchTimeout = null;
-    document.getElementById('filtro-busca')?.addEventListener('input', (e) => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        this.paginaAtual = 1;
-        this.carregarHistorico();
-      }, 350);
     });
 
     // Campo de quantidade do modal de edição: limpar destaque ao corrigir
@@ -136,56 +112,13 @@ const HistoryModule = {
     }
   },
 
-  // Períodos rápidos (Hoje, Ontem, 7 dias, Este Mês, Todos)
-  definirPeriodoRapido(tipo) {
-    const dataInicioInput = document.getElementById('filtro-data-inicio');
-    const dataFimInput = document.getElementById('filtro-data-fim');
-    const hoje = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const hojeStr = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
-
-    if (tipo === 'hoje') {
-      dataInicioInput.value = hojeStr;
-      dataFimInput.value = hojeStr;
-    } else if (tipo === 'ontem') {
-      const ontem = new Date();
-      ontem.setDate(hoje.getDate() - 1);
-      const ontemStr = `${ontem.getFullYear()}-${pad(ontem.getMonth() + 1)}-${pad(ontem.getDate())}`;
-      dataInicioInput.value = ontemStr;
-      dataFimInput.value = ontemStr;
-    } else if (tipo === '7dias') {
-      const d7 = new Date();
-      d7.setDate(hoje.getDate() - 7);
-      dataInicioInput.value = `${d7.getFullYear()}-${pad(d7.getMonth() + 1)}-${pad(d7.getDate())}`;
-      dataFimInput.value = hojeStr;
-    } else if (tipo === '30dias') {
-      const d30 = new Date();
-      d30.setDate(hoje.getDate() - 30);
-      dataInicioInput.value = `${d30.getFullYear()}-${pad(d30.getMonth() + 1)}-${pad(d30.getDate())}`;
-      dataFimInput.value = hojeStr;
-    } else if (tipo === 'este_mes') {
-      const dInicio = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-01`;
-      dataInicioInput.value = dInicio;
-      dataFimInput.value = hojeStr;
-    } else if (tipo === 'todos') {
-      dataInicioInput.value = '';
-      dataFimInput.value = '';
-    }
-
-    // Atualizar rótulo do período selecionado
-    this.atualizarRotuloPeriodo();
-
-    this.paginaAtual = 1;
-    this.carregarHistorico();
-  },
-
   // Atualizar o rótulo do período selecionado
   atualizarRotuloPeriodo() {
-    const lblPeriodo = document.getElementById('filtro-periodo-lbl');
+    const lblPeriodo = document.getElementById('hist-periodo-lbl');
     if (!lblPeriodo) return;
 
-    const dataInicio = document.getElementById('filtro-data-inicio')?.value || '';
-    const dataFim = document.getElementById('filtro-data-fim')?.value || '';
+    const dataInicio = this.dataInicio || '';
+    const dataFim = this.dataFim || '';
 
     if (!dataInicio && !dataFim) {
       lblPeriodo.textContent = 'Período selecionado';
@@ -199,11 +132,9 @@ const HistoryModule = {
     };
 
     if (dataInicio && dataFim) {
-      if (dataInicio === dataFim) {
-        lblPeriodo.textContent = `📅 ${formatar(dataInicio)}`;
-      } else {
-        lblPeriodo.textContent = `📅 ${formatar(dataInicio)} até ${formatar(dataFim)}`;
-      }
+      lblPeriodo.textContent = dataInicio === dataFim
+        ? `📅 ${formatar(dataInicio)}`
+        : `📅 ${formatar(dataInicio)} até ${formatar(dataFim)}`;
     } else if (dataInicio) {
       lblPeriodo.textContent = `📅 a partir de ${formatar(dataInicio)}`;
     } else {
@@ -213,8 +144,10 @@ const HistoryModule = {
 
   // Aplicar período personalizado com datas informadas (De/Até)
   aplicarPeriodoPersonalizado() {
-    const dataInicioInput = document.getElementById('filtro-data-inicio');
-    const dataFimInput = document.getElementById('filtro-data-fim');
+    const dataInicioInput = document.getElementById('hist-data-inicio');
+    const dataFimInput = document.getElementById('hist-data-fim');
+    if (!dataInicioInput || !dataFimInput) return;
+
     const dataInicio = dataInicioInput.value;
     const dataFim = dataFimInput.value;
 
@@ -227,32 +160,23 @@ const HistoryModule = {
       return;
     }
 
-    // Remover destaque dos botões de período rápido
-    document.querySelectorAll('.btn-periodo-rapido').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+    document.querySelectorAll('.btn-hist-periodo').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
 
+    this.dataInicio = dataInicio;
+    this.dataFim = dataFim;
     this.atualizarRotuloPeriodo();
     this.paginaAtual = 1;
     this.carregarHistorico();
   },
 
-  // Limpar todos os filtros e recarregar
-  limparFiltros() {
-    ['filtro-data-inicio', 'filtro-data-fim', 'filtro-busca'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    ['filtro-turno', 'filtro-operador', 'filtro-material', 'filtro-ocorrencia'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
+  // Reiniciar o período para o padrão (30 dias)
+  limparPeriodo() {
+    const dataInicioInput = document.getElementById('hist-data-inicio');
+    const dataFimInput = document.getElementById('hist-data-fim');
+    if (dataInicioInput) dataInicioInput.value = '';
+    if (dataFimInput) dataFimInput.value = '';
 
-    // Remover destaque dos botões de período rápido
-    document.querySelectorAll('.btn-periodo-rapido').forEach((b) => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
-
-    this.atualizarRotuloPeriodo();
-
-    this.paginaAtual = 1;
-    this.carregarHistorico();
+    document.querySelector('.btn-hist-periodo[data-dias="30"]')?.click();
   },
 
   // Carregar histórico da API
@@ -271,13 +195,8 @@ const HistoryModule = {
 
     try {
       const params = {
-        data_inicio: document.getElementById('filtro-data-inicio')?.value || '',
-        data_fim: document.getElementById('filtro-data-fim')?.value || '',
-        turno_id: document.getElementById('filtro-turno')?.value || '',
-        operador_id: document.getElementById('filtro-operador')?.value || '',
-        material_id: document.getElementById('filtro-material')?.value || '',
-        tipo_ocorrencia: document.getElementById('filtro-ocorrencia')?.value || '',
-        busca: document.getElementById('filtro-busca')?.value || '',
+        data_inicio: this.dataInicio || '',
+        data_fim: this.dataFim || '',
         limit: this.limitePorPagina,
         offset: (this.paginaAtual - 1) * this.limitePorPagina
       };
@@ -287,7 +206,6 @@ const HistoryModule = {
       this.totalRegistros = res.total || 0;
 
       this.renderizarTabela(this.dadosAtuais);
-      this.renderizarTotaisFiltro(this.dadosAtuais);
       this.renderizarPaginacao();
     } catch (error) {
       console.error('Erro ao buscar histórico:', error);
@@ -311,8 +229,8 @@ const HistoryModule = {
         <tr>
           <td colspan="7" class="py-12 text-center text-slate-400">
             <p class="text-3xl mb-1">🔍</p>
-            <p class="text-slate-600 font-medium">Nenhum registro encontrado para os filtros selecionados.</p>
-            <p class="text-xs text-slate-400 mt-1">Tente ajustar as datas ou limpar a busca.</p>
+            <p class="text-slate-600 font-medium">Nenhum registro encontrado para o período selecionado.</p>
+            <p class="text-xs text-slate-400 mt-1">Tente ajustar o período ou verificar os lançamentos.</p>
           </td>
         </tr>
       `;
@@ -370,36 +288,6 @@ const HistoryModule = {
     });
 
     tbody.innerHTML = html;
-  },
-
-  // Renderizar resumo de totais na barra superior da tabela
-  renderizarTotaisFiltro(dados) {
-    const container = document.getElementById('resumo-totais-filtro');
-    if (!container) return;
-
-    if (!dados || dados.length === 0) {
-      container.innerHTML = '<span class="text-xs text-slate-400">Nenhum dado para somar.</span>';
-      return;
-    }
-
-    const totaisPorMaterial = {};
-    dados.forEach((reg) => {
-      const key = `${reg.material_nome} (${reg.unidade})`;
-      totaisPorMaterial[key] = (totaisPorMaterial[key] || 0) + Number(reg.quantidade);
-    });
-
-    let html = `<div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">`;
-    html += `<span class="text-slate-500">Totais no filtro:</span>`;
-
-    for (const [material, total] of Object.entries(totaisPorMaterial)) {
-      html += `
-        <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg">
-          ${material}: <strong>${total.toLocaleString('pt-BR')}</strong>
-        </span>
-      `;
-    }
-    html += `</div>`;
-    container.innerHTML = html;
   },
 
   // Renderizar paginação
@@ -515,20 +403,19 @@ const HistoryModule = {
     }
   },
 
-  // Exportar para Excel (.xlsx)
+  // Exportar registros do período selecionado para Excel (.xlsx)
   async exportarExcel() {
     try {
       App.mostrarToast('Gerando planilha Excel...', 'info');
 
-      // Buscar todos os registros do filtro sem limite de paginação
+      // Garantir intervalo definido (por padrão: últimos 30 dias)
+      if (this.dataInicio === undefined || this.dataFim === undefined) {
+        this.calcularRangoPeriodo('30');
+      }
+
       const params = {
-        data_inicio: document.getElementById('filtro-data-inicio')?.value || '',
-        data_fim: document.getElementById('filtro-data-fim')?.value || '',
-        turno_id: document.getElementById('filtro-turno')?.value || '',
-        operador_id: document.getElementById('filtro-operador')?.value || '',
-        material_id: document.getElementById('filtro-material')?.value || '',
-        tipo_ocorrencia: document.getElementById('filtro-ocorrencia')?.value || '',
-        busca: document.getElementById('filtro-busca')?.value || '',
+        data_inicio: this.dataInicio || '',
+        data_fim: this.dataFim || '',
         limit: 5000,
         offset: 0
       };

@@ -40,12 +40,12 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/style.css" />
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-[#F3F6FA] text-slate-800 antialiased min-h-screen flex flex-col">
 
   <!-- TOPBAR / CABEÇALHO PRINCIPAL -->
-  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
+  <header class="bg-[#101828] text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
+      <div class="flex items-center justify-between h-[68px]">
         
         <!-- Logo e Identidade -->
         <div class="flex items-center space-x-3">
@@ -96,7 +96,7 @@
   </header>
 
   <!-- BARRA DE NAVEGAÇÃO ENTRE ABAS -->
-  <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-16 z-30">
+  <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-[68px] z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto no-scrollbar">
         <button data-tab="atendimento" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition bg-blue-600 text-white shadow-sm">
@@ -116,7 +116,7 @@
 
         <button data-tab="historico" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
           <span class="text-lg">📊</span>
-          <span>Histórico & Filtros</span>
+          <span>Histórico</span>
         </button>
 
         <button data-tab="dashboard" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
@@ -258,11 +258,11 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Data Prometida de Entrega *</label>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Data Prevista de Entrega *</label>
                     <input type="date" id="ped-data-prometida" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Hora Prometida</label>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Hora Prevista</label>
                     <input type="time" id="ped-hora-prometida" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
                   </div>
                   <div>
@@ -563,95 +563,41 @@
           <div>
             <h2 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
               <span>🔎</span>
-              <span>Histórico & Filtros Avançados</span>
+              <span>Histórico de Produção</span>
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Consulte lançamentos por período, turno, operador e material</p>
+            <p class="text-xs text-slate-500 mt-0.5">Consulte os lançamentos de produção por período</p>
           </div>
 
           <!-- Botões de Ação / Exportação -->
           <div class="flex items-center space-x-2">
-            <button onclick="HistoryModule.exportarExcel()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm transition">
-              <span>📊</span>
-              <span>Exportar Excel (.xlsx)</span>
+            <button onclick="HistoryModule.exportarExcel()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+              Exportar Excel (.xlsx)
             </button>
-            <button onclick="HistoryModule.imprimirRelatorioPDF()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm transition">
-              <span>📄</span>
-              <span>Imprimir / PDF</span>
+            <button onclick="HistoryModule.imprimirRelatorioPDF()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-sm transition">
+              Imprimir / PDF
             </button>
           </div>
         </div>
 
         <div class="quadro-divider"></div>
 
-        <!-- Botões de Período Rápido + Datas Personalizadas -->
-        <div class="flex flex-wrap items-end justify-between gap-3">
-          <div class="flex items-center flex-wrap gap-1.5">
-            <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mr-1">Período rápido:</span>
-            <button data-periodo="hoje" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Hoje</button>
-            <button data-periodo="ontem" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Ontem</button>
-            <button data-periodo="7dias" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Últimos 7 dias</button>
-            <button data-periodo="30dias" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">30 dias</button>
-            <button data-periodo="este_mes" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">Este Mês</button>
-            <button data-periodo="todos" class="btn-periodo-rapido px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Todos</button>
+        <!-- Gerenciamento de Período (estilo Painel de Gestão) -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-extrabold text-slate-500 uppercase">Período:</span>
+          <button data-dias="7" class="btn-hist-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">7 Dias</button>
+          <button data-dias="30" class="btn-hist-periodo px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white border border-blue-600 transition">30 Dias</button>
+          <button data-dias="todos" class="btn-hist-periodo px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Histórico Todo</button>
+
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+            <span class="text-[10px] font-extrabold text-slate-500 uppercase">De:</span>
+            <input type="date" id="hist-data-inicio" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
+            <span class="text-[10px] font-extrabold text-slate-500 uppercase">Até:</span>
+            <input type="date" id="hist-data-fim" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
+            <button id="btn-hist-aplicar-periodo" class="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-bold transition">Aplicar</button>
+            <button id="btn-hist-limpar-periodo" class="px-2 py-1 text-slate-400 hover:text-slate-700 rounded-md text-xs font-bold transition" title="Voltar para 30 dias">✕</button>
           </div>
 
-          <div class="flex items-end gap-2 flex-wrap">
-            <div class="text-xs font-semibold text-slate-400 pb-1.5" id="filtro-periodo-lbl">Período selecionado</div>
-            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
-              <span class="text-[10px] font-extrabold text-slate-500 uppercase">De:</span>
-              <input type="date" id="filtro-data-inicio" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
-              <span class="text-[10px] font-extrabold text-slate-500 uppercase">Até:</span>
-              <input type="date" id="filtro-data-fim" class="bg-white border border-slate-300 rounded-md px-1.5 py-1 text-xs font-semibold text-slate-800" />
-              <button id="btn-filtro-aplicar-periodo" class="px-2.5 py-1 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-bold transition">Aplicar</button>
-              <button id="btn-filtro-limpar-periodo" class="px-2 py-1 text-slate-400 hover:text-slate-700 rounded-md text-xs font-bold transition" title="Voltar para Este Mês">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Grid de Filtros Detalhados -->
-        <div class="quadro-filtros-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Turno:</label>
-            <select id="filtro-turno" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
-              <option value="">Todos os Turnos</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Operador:</label>
-            <select id="filtro-operador" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
-              <option value="">Todos os Operadores</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Material:</label>
-            <select id="filtro-material" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
-              <option value="">Todos os Materiais</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Ocorrência:</label>
-            <select id="filtro-ocorrencia" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800">
-              <option value="">Todas as Ocorrências</option>
-              <option value="NORMAL">Normal</option>
-              <option value="MANUTENCAO">Manutenção / Limpeza</option>
-              <option value="MATERIAL">Troca de Bobina / Material</option>
-              <option value="AJUSTE">Ajuste de Faca / Regulagem</option>
-              <option value="URGENCIA">Pedido Urgente</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Texto:</label>
-            <input type="text" id="filtro-busca" placeholder="Operador, material, obs..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800" />
-          </div>
-        </div>
-
-        <!-- Totais consolidados no filtro -->
-        <div id="resumo-totais-filtro" class="quadro-totais">
-          <!-- Inserido dinamicamente via JS -->
+          <span class="text-xs font-semibold text-slate-500" id="hist-periodo-lbl">Período selecionado</span>
         </div>
 
       </div>

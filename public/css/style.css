@@ -216,3 +216,91 @@ select.campo-invalido {
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
 }
+
+/* ==========================================
+   DESIGN SYSTEM GRÁFICA EPA (guia visual)
+   ========================================== */
+:root {
+  --color-primary: #3158D8;
+  --color-primary-dark: #2446B8;
+  --color-background: #F3F6FA;
+  --color-surface: #FFFFFF;
+  --color-text: #101828;
+  --color-text-secondary: #344054;
+  --color-text-muted: #667085;
+  --color-border: #DDE3EC;
+  --color-success: #12B76A;
+  --color-warning: #F79009;
+  --color-danger: #F04438;
+  --color-info: #2E90FA;
+  --color-purple: #7F56D9;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.08);
+  --shadow-hover: 0 4px 12px rgba(16, 24, 40, 0.12);
+}
+
+/* Fundo geral conforme design system */
+body {
+  background-color: var(--color-background);
+}
+
+/* Azul institucional EPA aplicado a ações principais e navegação do sistema */
+.bg-blue-600 { background-color: #3158D8 !important; }
+.bg-blue-700 { background-color: #2446B8 !important; }
+.text-blue-600 { color: #3158D8 !important; }
+.text-blue-700 { color: #2446B8 !important; }
+.border-blue-500,
+.border-blue-600 { border-color: #3158D8 !important; }
+.border-blue-700 { border-color: #2446B8 !important; }
+.ring-blue-500 { --tw-ring-color: #3158D8 !important; }
+
+/* Header EPA Dark (#101828) */
+header {
+  background-color: #101828;
+}
+
+/* Cards: bordas e raios do design system (14px) */
+.card-grafica,
+.quadro-card {
+  border-color: #DDE3EC;
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Inputs: raio 8px conforme design system */
+input:not([type="checkbox"]):not([type="radio"]),
+select {
+  border-radius: var(--radius-md);
+}
+
+/* Atualizar azul do modo chão de fábrica ao EPA Blue */
+.btn-material.selected {
+  border-color: #3158D8 !important;
+  background-color: #eff6ff !important;
+  box-shadow: 0 0 0 3px rgba(49, 88, 216, 0.25) !important;
+}
+
+.quadro-filtros-grid > div:focus-within {
+  background: #ffffff;
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 3px rgba(49, 88, 216, 0.08);
+}
+
+/* Botões secundários (design system) */
+.btn-secondary-epa {
+  background: #fff;
+  border: 1px solid #D0D5DD;
+  color: #344054;
+  border-radius: var(--radius-md);
+}
