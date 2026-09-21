@@ -2,7 +2,6 @@
 const KanbanModule = {
   etapasCache: [],
   pedidosCache: [],
-  etiquetaAtual: null,
   dragPedidoId: null,
 
   async init() {
@@ -65,9 +64,7 @@ const KanbanModule = {
       header.className = 'flex items-center justify-between mb-3 pb-2 border-b border-slate-200';
       header.innerHTML = `
         <div class="flex items-center space-x-2">
-          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white" style="background-color: ${etapa.cor}">
-            ${etapa.icone}
-          </span>
+          <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${etapa.cor}"></span>
           <div>
             <h3 class="font-extrabold text-slate-800 text-xs leading-tight">${etapa.nome}</h3>
             <span class="text-[10px] font-bold text-slate-400">${pedidos.length} pedido(s)</span>
@@ -139,15 +136,12 @@ const KanbanModule = {
       <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
         <span class="text-[10px] font-bold text-slate-400">📅 ${dataFormatada}</span>
         <div class="flex items-center space-x-1">
-          <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition" title="Detalhes">
-            👁️
-          </button>
-          <button onclick="KanbanModule.abrirEtiqueta(${ped.id})" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition" title="Etiqueta de Produção">
-            🏷️
+          <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="px-2 py-1 text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition" title="Visualizar pedido">
+            Visualizar
           </button>
           ${this.ehAdministrador() ? `
-          <button onclick="KanbanModule.excluirPedido(${ped.id})" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition" title="Excluir pedido">
-            🗑️
+          <button onclick="KanbanModule.excluirPedido(${ped.id})" class="px-2 py-1 text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition" title="Excluir pedido">
+            Excluir
           </button>` : ''}
         </div>
       </div>
@@ -526,7 +520,7 @@ const KanbanModule = {
           </div>
           <div class="p-3 bg-slate-50 rounded-xl">
             <p class="text-[10px] font-bold text-slate-500 uppercase">Etapa Atual</p>
-            <p class="text-sm font-bold text-slate-800">${pedido.etapa_icone} ${pedido.etapa_nome}</p>
+            <p class="text-sm font-bold text-slate-800">${pedido.etapa_nome}</p>
           </div>
         </div>
 
@@ -556,9 +550,6 @@ const KanbanModule = {
           <button onclick="KanbanModule.imprimirPedido()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition">
             🖨️ Imprimir Pedido
           </button>
-          <button onclick="KanbanModule.abrirEtiqueta(${pedido.id})" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition">
-            🏷️ Etiqueta de Produção
-          </button>
           <button type="button" class="modal-close-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">
             Fechar
           </button>
@@ -572,91 +563,4 @@ const KanbanModule = {
     }
   },
 
-  // Abrir modal de etiqueta de produção
-  async abrirEtiqueta(pedidoId) {
-    try {
-      const etiqueta = await API.pedidos.etiqueta(pedidoId);
-      if (!etiqueta) return;
-
-      this.etiquetaAtual = etiqueta;
-
-      const modal = document.getElementById('modal-etiqueta');
-      const conteudo = document.getElementById('etiqueta-conteudo');
-
-      const [ano, mes, dia] = (etiqueta.data_prometida || '').split('-');
-      const dataFormatada = etiqueta.data_prometida ? `${dia}/${mes}/${ano}` : 'Sem data';
-
-      conteudo.innerHTML = `
-        <div class="bg-white border-2 border-slate-300 rounded-xl p-4 text-center">
-          <div class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Gráfica EPA</div>
-          <div class="text-2xl font-black text-blue-700 mb-2">${etiqueta.numero_os}</div>
-          <div class="text-sm font-bold text-slate-800">${etiqueta.cliente_nome}</div>
-          <div class="text-xs text-slate-600 mt-0.5">${etiqueta.servico_nome} • ${etiqueta.quantidade} ${etiqueta.unidade}</div>
-          <div class="text-xs text-slate-500 mt-0.5">📅 Entrega: ${dataFormatada}</div>
-          <div class="text-xs font-bold text-slate-600 mt-1">Etapa: ${etiqueta.etapa_icone} ${etiqueta.etapa_nome}</div>
-        </div>
-      `;
-
-      modal.classList.remove('hidden');
-    } catch (error) {
-      console.error('Erro ao abrir etiqueta:', error);
-      App.mostrarToast('Erro ao gerar etiqueta.', 'erro');
-    }
-  },
-
-  // Imprimir etiqueta
-  imprimirEtiqueta() {
-    if (!this.etiquetaAtual) return;
-
-    const etiqueta = this.etiquetaAtual;
-    const [ano, mes, dia] = (etiqueta.data_prometida || '').split('-');
-    const dataFormatada = etiqueta.data_prometida ? `${dia}/${mes}/${ano}` : 'Sem data';
-    const horaFormatada = etiqueta.hora_prometida ? ` às ${etiqueta.hora_prometida}` : '';
-
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
-    if (!printWindow) {
-      App.mostrarToast('Permita pop-ups para imprimir a etiqueta.', 'erro');
-      return;
-    }
-
-    printWindow.document.write(`
-      <html>
-      <head>
-        <title>Etiqueta ${etiqueta.numero_os}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .etiqueta {
-            border: 2px solid #000;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            max-width: 300px;
-            margin: 0 auto;
-          }
-          .titulo { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-          .os { font-size: 24px; font-weight: 900; color: #1d4ed8; margin: 8px 0; }
-          .cliente { font-size: 14px; font-weight: bold; }
-          .info { font-size: 12px; color: #333; margin-top: 4px; }
-          .etapa { font-size: 12px; font-weight: bold; margin-top: 8px; }
-          .rodape { font-size: 9px; color: #666; margin-top: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="etiqueta">
-          <div class="titulo">Gráfica EPA</div>
-          <div class="os">${etiqueta.numero_os}</div>
-          <div class="cliente">${etiqueta.cliente_nome}</div>
-          <div class="info">${etiqueta.servico_nome} • ${etiqueta.quantidade} ${etiqueta.unidade}</div>
-          <div class="info">📅 Entrega: ${dataFormatada}${horaFormatada}</div>
-          <div class="etapa">${etiqueta.etapa_icone || ''} ${etiqueta.etapa_nome}</div>
-          <div class="rodape">Gráfica EPA - Produção</div>
-        </div>
-        <script>
-          window.onload = function() { window.print(); };
-        <\/script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-  }
 };

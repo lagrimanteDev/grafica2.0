@@ -42,6 +42,77 @@
 </head>
 <body class="bg-[#F3F6FA] text-slate-800 antialiased min-h-screen flex flex-col">
 
+  <!-- ========================================== -->
+  <!-- PÁGINA DE LOGIN (PRIMEIRA TELA DO SISTEMA) -->
+  <!-- ========================================== -->
+  <div id="login-page" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-[#0B1220] via-[#101828] to-[#1E293B] overflow-y-auto">
+    <div class="w-full max-w-md my-auto py-6">
+
+      <!-- Identidade Visual -->
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center font-extrabold text-white text-2xl shadow-lg border border-blue-400">
+          EPA
+        </div>
+        <h1 class="mt-3 text-2xl font-extrabold text-white tracking-wide">GRÁFICA EPA</h1>
+        <p class="text-sm text-slate-400 font-medium">ERP & Dashboard de Produção Gráfica</p>
+      </div>
+
+      <!-- Card de Login -->
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-5">
+
+        <div class="text-center">
+          <h2 class="text-lg font-extrabold text-slate-900 flex items-center justify-center space-x-2">
+            <span>Acessar o Sistema</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">Selecione um dos 3 perfis de acesso para entrar</p>
+        </div>
+
+        <!-- Seleção dos 3 Perfis -->
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" data-perfil="ADMIN" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-purple-400 hover:bg-purple-50">
+            <span class="block text-2xl mb-1">🛡️</span>
+            <span class="block text-[11px] font-extrabold text-slate-800 leading-tight">ADMINISTRADOR</span>
+          </button>
+          <button type="button" data-perfil="OPERADOR" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-blue-400 hover:bg-blue-50">
+            <span class="block text-2xl mb-1">🏭</span>
+            <span class="block text-[11px] font-extrabold text-slate-800 leading-tight">OPERADOR</span>
+          </button>
+          <button type="button" data-perfil="VENDEDOR" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-emerald-400 hover:bg-emerald-50">
+            <span class="block text-2xl mb-1">💼</span>
+            <span class="block text-[11px] font-extrabold text-slate-800 leading-tight">VENDEDOR</span>
+          </button>
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="form-login" class="space-y-3">
+          <input type="hidden" id="login-perfil" value="ADMIN" />
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">E-mail:</label>
+            <input type="email" id="login-email" placeholder="seu@email.com" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Senha:</label>
+            <input type="password" id="login-senha" placeholder="Sua senha" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
+          </div>
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow transition">
+           Entrar no Sistema
+          </button>
+        </form>
+
+        <!-- Credenciais de Acesso Rápido -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 space-y-1">
+          <p class="font-extrabold text-slate-700 uppercase tracking-wider">Acesso rápido (demonstração):</p>
+          <p><strong>Admin:</strong> admin@graficaepa.com / admin123</p>
+          <p><strong>Operador:</strong> operador@graficaepa.com / oper123</p>
+          <p><strong>Vendedor:</strong> vendedor@graficaepa.com / vendedor123</p>
+        </div>
+
+      </div>
+
+      <p class="text-center text-[11px] text-slate-500 mt-4">Sistema local da Gráfica EPA • Servidor em <span class="font-mono">http://localhost:3300</span></p>
+    </div>
+  </div>
+
   <!-- TOPBAR / CABEÇALHO PRINCIPAL -->
   <header class="bg-[#101828] text-white shadow-md border-b border-slate-800 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,11 +145,6 @@
 
         <!-- Status e Acessibilidade -->
         <div class="flex items-center space-x-3">
-          <button id="btn-toggle-modo-fabrica" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition" title="Aumentar botões para operadores">
-            <span>👓</span>
-            <span>Chão de Fábrica</span>
-          </button>
-          
           <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
             <span id="status-indicator-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span id="status-indicator-text" class="text-slate-300 font-medium hidden sm:inline">Online</span>
@@ -100,32 +166,26 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto no-scrollbar">
         <button data-tab="atendimento" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition bg-blue-600 text-white shadow-sm">
-          <span class="text-lg">🛎️</span>
           <span>Atendimento</span>
         </button>
 
         <button data-tab="kanban" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
-          <span class="text-lg">📋</span>
           <span>Chão de Fábrica (Kanban)</span>
         </button>
 
         <button data-tab="operador" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
-          <span class="text-lg">📝</span>
           <span>Lançamento Rápido</span>
         </button>
 
         <button data-tab="historico" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
-          <span class="text-lg">📊</span>
           <span>Histórico</span>
         </button>
 
         <button data-tab="dashboard" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
-          <span class="text-lg">📈</span>
           <span>Painel de Gestão</span>
         </button>
 
         <button data-tab="configuracoes" class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition text-slate-600 hover:bg-slate-100">
-          <span class="text-lg">⚙️</span>
           <span>Configurações</span>
         </button>
       </div>
@@ -149,7 +209,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
               <div>
                 <h2 class="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
-                  <span>🛎️</span>
                   <span>Cadastro de Novo Pedido (OS)</span>
                 </h2>
                 <p class="text-xs text-slate-500 font-medium mt-0.5">Preencha os dados do cliente e as especificações do serviço</p>
@@ -167,7 +226,6 @@
               <!-- 1. DADOS DO CLIENTE -->
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
-                  <span>👤</span>
                   <span>1. Dados do Cliente</span>
                 </h3>
                 
@@ -202,7 +260,6 @@
               <!-- 2. ESPECIFICAÇÕES DO SERVIÇO -->
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
-                  <span>🖨️</span>
                   <span>2. Especificações do Serviço</span>
                 </h3>
 
@@ -252,7 +309,6 @@
               <!-- 3. INFORMAÇÕES FINANCEIRAS E PRAZOS -->
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
-                  <span>💰</span>
                   <span>3. Informações Financeiras e Prazos</span>
                 </h3>
 
@@ -299,7 +355,6 @@
               <!-- BOTÃO DE SUBMISSÃO -->
               <div class="pt-2">
                 <button type="submit" id="btn-ped-submit" class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-600/30 flex items-center justify-center transition font-bold text-lg cursor-pointer transform hover:-translate-y-0.5">
-                  <span class="text-2xl mr-2">📦</span>
                   <span>GERAR ORDEM DE SERVIÇO</span>
                 </button>
               </div>
@@ -339,7 +394,6 @@
               <li>• O número da OS é gerado <strong>automaticamente</strong>.</li>
               <li>• Anexe a <strong>arte final</strong> para agilizar a produção.</li>
               <li>• O pedido entra na etapa <strong>"Aguardando Pré-Impressão"</strong>.</li>
-              <li>• A etiqueta de produção pode ser impressa depois no pedido.</li>
             </ul>
           </div>
         </div>
@@ -357,7 +411,6 @@
       <div class="flex items-center justify-between flex-wrap gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h2 class="text-lg font-extrabold text-slate-900 flex items-center space-x-2">
-            <span>🏭</span>
             <span>Quadro de Produção (Kanban)</span>
           </h2>
           <p class="text-xs text-slate-500">Arraste os cards ou use os botões para mover os pedidos entre as etapas</p>
@@ -392,7 +445,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
               <div>
                 <h2 class="text-xl font-extrabold text-slate-900 flex items-center space-x-2">
-                  <span>🚀</span>
                   <span>Registrar Produção Diária</span>
                 </h2>
                 <p class="text-xs text-slate-500 font-medium mt-0.5">Preencha os dados da tiragem ou lote finalizado</p>
@@ -516,7 +568,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-1.5">
-                  <span>📦</span>
                   <span>Pedidos Recentes</span>
                 </h3>
                 <p class="text-xs text-slate-500 font-medium">Ordens de serviço em produção</p>
@@ -562,7 +613,6 @@
         <div class="flex items-start justify-between flex-wrap gap-3">
           <div>
             <h2 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-              <span>🔎</span>
               <span>Histórico de Produção</span>
             </h2>
             <p class="text-xs text-slate-500 mt-0.5">Consulte os lançamentos de produção por período</p>
@@ -648,7 +698,6 @@
       <div class="flex items-center justify-between flex-wrap gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <h2 class="text-lg font-extrabold text-slate-900 flex items-center space-x-2">
-            <span>📈</span>
             <span>Painel de Desempenho & Indicadores</span>
           </h2>
           <p class="text-xs text-slate-500">Métricas comerciais, produtivas e financeiras consolidadas</p>
@@ -676,8 +725,7 @@
         
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Total de Lotes / Jobs</span>
-            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">📦</span>
+            <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Total de Lotes</span>
           </div>
           <div id="kpi-total-jobs" class="text-2xl font-black text-slate-900 mt-2">0</div>
           <span class="text-xs text-emerald-600 font-semibold mt-1 inline-block">100% digitalizado</span>
@@ -686,7 +734,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Dias com Produção</span>
-            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">📅</span>
           </div>
           <div id="kpi-dias-trabalhados" class="text-2xl font-black text-slate-900 mt-2">0 dias</div>
           <span class="text-xs text-slate-500 font-medium mt-1 inline-block">Histórico ativo</span>
@@ -695,7 +742,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Material Líder (Top 1)</span>
-            <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">🏆</span>
           </div>
           <div id="kpi-top-material" class="text-lg font-black text-purple-900 mt-2 truncate">Carregando...</div>
           <span class="text-xs text-purple-600 font-semibold mt-1 inline-block">Maior volume produzido</span>
@@ -704,7 +750,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ocorrências / Paradas</span>
-            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">⚠️</span>
           </div>
           <div id="kpi-total-ocorrencias" class="text-2xl font-black text-amber-900 mt-2">0</div>
           <span class="text-xs text-amber-700 font-medium mt-1 inline-block">Ajustes & Manutenções</span>
@@ -718,7 +763,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Total de Pedidos (OS)</span>
-            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">🛎️</span>
           </div>
           <div id="kpi-total-pedidos" class="text-2xl font-black text-slate-900 mt-2">0</div>
           <span class="text-xs text-indigo-600 font-semibold mt-1 inline-block">Ordens de serviço no período</span>
@@ -727,7 +771,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Faturamento Total</span>
-            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">💰</span>
           </div>
           <div id="kpi-faturamento" class="text-xl font-black text-emerald-700 mt-2">R$ 0,00</div>
           <span class="text-xs text-emerald-600 font-semibold mt-1 inline-block">Valor total dos pedidos</span>
@@ -736,7 +779,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ticket Médio</span>
-            <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">🎯</span>
           </div>
           <div id="kpi-ticket-medio" class="text-xl font-black text-purple-700 mt-2">R$ 0,00</div>
           <span class="text-xs text-purple-600 font-semibold mt-1 inline-block">Valor médio por pedido</span>
@@ -745,7 +787,6 @@
         <div class="card-grafica p-5 bg-white border border-slate-200">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Cumprimento de Prazos</span>
-            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">⏱️</span>
           </div>
           <div id="kpi-taxa-prazo" class="text-2xl font-black text-amber-700 mt-2">0%</div>
           <span class="text-xs text-amber-600 font-semibold mt-1 inline-block">Entregas no prazo</span>
@@ -759,7 +800,7 @@
         <!-- Pedidos por Serviço -->
         <div class="lg:col-span-7 card-grafica p-5 bg-white border border-slate-200 space-y-3">
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm">🛎️ Pedidos por Serviço</h3>
+            <h3 class="font-extrabold text-slate-900 text-sm">Pedidos por Serviço</h3>
             <p class="text-xs text-slate-500">Volume e faturamento por tipo de produto</p>
           </div>
           <div id="dash-pedidos-servico" class="space-y-2">
@@ -770,8 +811,8 @@
         <!-- Cumprimento de Prazos -->
         <div class="lg:col-span-5 card-grafica p-5 bg-white border border-slate-200 space-y-3">
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm">⏱️ Cumprimento de Prazos</h3>
-            <p class="text-xs text-slate-500">Taxa de entregas no prazo vs. atrasadas</p>
+            <h3 class="font-extrabold text-slate-900 text-lg">Cumprimento de Prazos</h3>
+            <p class="text-sm text-slate-500">Taxa de entregas no prazo vs. atrasadas</p>
           </div>
           <div id="dash-cumprimento-prazos" class="space-y-2">
             <!-- Inserido dinamicamente via JS -->
@@ -787,7 +828,7 @@
         <div class="lg:col-span-8 card-grafica p-5 bg-white border border-slate-200 space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-extrabold text-slate-900 text-sm">📅 Produção Diária (Volume & Lotes)</h3>
+              <h3 class="font-extrabold text-slate-900 text-sm">Produção Diária (Volume & Lotes)</h3>
               <p class="text-xs text-slate-500">Comparativo dia a dia da capacidade de entrega</p>
             </div>
           </div>
@@ -799,7 +840,7 @@
         <!-- Gráfico 2: Distribuição por Tipo de Material -->
         <div class="lg:col-span-4 card-grafica p-5 bg-white border border-slate-200 space-y-3">
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm">🥧 Volume por Material</h3>
+            <h3 class="font-extrabold text-slate-900 text-sm">Volume por Material</h3>
             <p class="text-xs text-slate-500">Proporção dos itens mais impressos</p>
           </div>
           <div class="h-72">
@@ -815,8 +856,8 @@
         <!-- Gráfico 3: Comparativo por Turno -->
         <div class="lg:col-span-6 card-grafica p-5 bg-white border border-slate-200 space-y-3">
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm">⚖️ Rendimento por Turno (1º vs 2º vs 3º)</h3>
-            <p class="text-xs text-slate-500">Jobs concluídos e ocorrências por período</p>
+            <h3 class="font-extrabold text-slate-900 text-sm">Rendimento por Turno (1º vs 2º vs 3º)</h3>
+            <p class="text-xs text-slate-500">Trabalhos concluídos por período</p>
           </div>
           <div class="h-64">
             <canvas id="chart-turnos"></canvas>
@@ -826,7 +867,7 @@
         <!-- Gráfico 4: Produção por Operador -->
         <div class="lg:col-span-6 card-grafica p-5 bg-white border border-slate-200 space-y-3">
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm">👷 Desempenho por Operador / Equipe</h3>
+            <h3 class="font-extrabold text-slate-900 text-sm">Desempenho por Operador / Equipe</h3>
             <p class="text-xs text-slate-500">Volume de entregas registradas por colaborador</p>
           </div>
           <div class="h-64">
@@ -834,23 +875,6 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- PAINEL DE IDENTIFICAÇÃO DE GARGALOS -->
-      <div class="card-grafica p-5 bg-white border border-slate-200 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 class="font-extrabold text-slate-900 text-sm flex items-center space-x-2">
-              <span>🔍</span>
-              <span>Identificação de Gargalos & Ocorrências de Chão de Fábrica</span>
-            </h3>
-            <p class="text-xs text-slate-500">Histórico de paradas para manutenção, trocas de insumo e ajustes</p>
-          </div>
-        </div>
-
-        <div id="dash-lista-gargalos">
-          <!-- Inserido dinamicamente via JS -->
-        </div>
       </div>
 
     </section>
@@ -870,7 +894,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>🛎️</span>
                   <span>Serviços & Produtos</span>
                 </h3>
                 <p class="text-xs text-slate-500">Categorias disponíveis no formulário de atendimento</p>
@@ -944,7 +967,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>👥</span>
                   <span>Usuários & Acessos</span>
                 </h3>
                 <p class="text-xs text-slate-500">Contas de atendentes, operadores e administradores</p>
@@ -988,7 +1010,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>🖨️</span>
                   <span>Materiais Gráficos</span>
                 </h3>
                 <p class="text-xs text-slate-500">Tipos de impressos e produtos da gráfica</p>
@@ -1028,7 +1049,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>👷</span>
                   <span>Operadores & Equipes</span>
                 </h3>
                 <p class="text-xs text-slate-500">Colaboradores do chão de fábrica</p>
@@ -1076,7 +1096,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>🔐</span>
                   <span>Log de Auditoria</span>
                 </h3>
                 <p class="text-xs text-slate-500">Rastreabilidade completa de ações no sistema</p>
@@ -1100,7 +1119,6 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>🛡️</span>
                   <span>Rotinas de Backup & Segurança</span>
                 </h3>
                 <p class="text-xs text-slate-500">Proteção contra falhas e perda de dados</p>
@@ -1121,12 +1139,10 @@
             <!-- Botões de Ação de Backup -->
             <div class="space-y-2">
               <button id="btn-criar-backup-agora" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2">
-                <span>💾</span>
                 <span>Criar Cópia de Segurança Agora</span>
               </button>
 
               <a href="/api/backup/exportar-json" download class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2">
-                <span>📥</span>
                 <span>Exportar Todos os Dados em JSON</span>
               </a>
             </div>
@@ -1137,7 +1153,7 @@
               <form id="form-restaurar-backup" class="space-y-2">
                 <input type="file" id="input-arquivo-restauracao" accept=".sqlite" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
                 <button type="submit" class="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition">
-                  ⚠️ Restaurar Banco de Dados
+                Restaurar Banco de Dados
                 </button>
               </form>
             </div>
@@ -1171,7 +1187,6 @@
       
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-          <span>📦</span>
           <span id="modal-pedido-titulo">Detalhes do Pedido</span>
         </h3>
         <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
@@ -1185,33 +1200,6 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL DE ETIQUETA DE PRODUÇÃO -->
-  <!-- ========================================== -->
-  <div id="modal-etiqueta" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 fade-in">
-      
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-          <span>🏷️</span>
-          <span>Etiqueta de Produção</span>
-        </h3>
-        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
-      </div>
-
-      <div id="etiqueta-conteudo" class="text-center space-y-3">
-        <!-- Inserido dinamicamente via JS -->
-      </div>
-
-      <div class="flex items-center justify-center space-x-2 pt-2">
-        <button onclick="KanbanModule.imprimirEtiqueta()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow transition">
-          🖨️ Imprimir Etiqueta
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ========================================== -->
   <!-- MODAL DE CORREÇÃO / EDIÇÃO RÁPIDA -->
   <!-- ========================================== -->
   <div id="modal-edicao" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -1219,7 +1207,6 @@
       
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-          <span>✏️</span>
           <span>Corrigir Lançamento de Produção</span>
         </h3>
         <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
@@ -1304,63 +1291,6 @@
           <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition">Salvar Alterações</button>
         </div>
       </form>
-
-    </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- MODAL DE LOGIN -->
-  <!-- ========================================== -->
-  <div id="modal-login" class="modal-container fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 fade-in">
-      
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-          <span>🔐</span>
-          <span>Login do Sistema</span>
-        </h3>
-        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
-      </div>
-
-      <!-- Opções de Perfil -->
-      <div class="grid grid-cols-3 gap-2">
-        <button type="button" data-perfil="ADMIN" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-purple-400 hover:bg-purple-50">
-          <span class="block text-2xl mb-1">🛡️</span>
-          <span class="block text-xs font-extrabold text-slate-800">ADMINISTRADOR</span>
-        </button>
-        <button type="button" data-perfil="OPERADOR" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-blue-400 hover:bg-blue-50">
-          <span class="block text-2xl mb-1">🏭</span>
-          <span class="block text-xs font-extrabold text-slate-800">OPERADOR</span>
-        </button>
-        <button type="button" data-perfil="VENDEDOR" class="btn-perfil-login p-3 rounded-xl border-2 border-slate-200 bg-white text-center transition hover:border-emerald-400 hover:bg-emerald-50">
-          <span class="block text-2xl mb-1">💼</span>
-          <span class="block text-xs font-extrabold text-slate-800">VENDEDOR</span>
-        </button>
-      </div>
-
-      <!-- Formulário de Login -->
-      <form id="form-login" class="space-y-3">
-        <input type="hidden" id="login-perfil" value="ADMIN" />
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">E-mail:</label>
-          <input type="email" id="login-email" placeholder="seu@email.com" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Senha:</label>
-          <input type="password" id="login-senha" placeholder="Sua senha" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800" />
-        </div>
-        <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow transition">
-          🔓 Entrar no Sistema
-        </button>
-      </form>
-
-      <!-- Credenciais de demonstração -->
-      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 space-y-1">
-        <p class="font-extrabold text-slate-700 uppercase tracking-wider">Credenciais de Demonstração:</p>
-        <p>🛡️ <strong>Admin:</strong> admin@graficaepa.com / admin123</p>
-        <p>🏭 <strong>Operador:</strong> operador@graficaepa.com / oper123</p>
-        <p>💼 <strong>Vendedor:</strong> vendedor@graficaepa.com / vendedor123</p>
-      </div>
 
     </div>
   </div>

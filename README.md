@@ -18,6 +18,28 @@ npm install
 npm start
 ```
 
+> **Acesso:** O sistema abre em `http://localhost:3300` (a porta padrão é a **3300**, configurável pela variável de ambiente `PORT`).
+
+---
+
+## 🔐 Credenciais de Acesso (Login)
+
+Ao abrir o sistema, a **primeira tela é a página de login**, com os **3 perfis de acesso**. Selecione o perfil, ou digite o e-mail e a senha abaixo:
+
+| Perfil | E-mail | Senha |
+| --- | --- | --- |
+| 🛡️ **ADMINISTRADOR** | `admin@graficaepa.com` | `admin123` |
+| 🏭 **OPERADOR** | `operador@graficaepa.com` | `oper123` |
+| 💼 **VENDEDOR** | `vendedor@graficaepa.com` | `vendedor123` |
+
+> **Perfis adicionais no banco (seed):** `atendimento@graficaepa.com` / `atend123` (perfil **ATENDIMENTO**).
+
+### Permissões por Perfil:
+- 🛡️ **ADMINISTRADOR**: acesso total a todos os módulos (Atendimento, Kanban, Lançamento, Histórico, Painel de Gestão e Configurações).
+- 🏭 **OPERADOR**: acesso restrito ao **Chão de Fábrica (Kanban)** e **Lançamento Rápido**.
+- 💼 **VENDEDOR**: acesso restrito ao módulo de **Atendimento** (criação de pedidos/OS).
+- 🛎️ **ATENDIMENTO**: acesso a **Atendimento**, **Kanban** e **Histórico**.
+
 ---
 
 ## 🎯 Módulos do Sistema

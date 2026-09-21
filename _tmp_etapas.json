@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "nome": "Aguardando Pré-Impressão",
+    "ordem": 1,
+    "cor": "#f59e0b",
+    "icone": "📋"
+  },
+  {
+    "id": 2,
+    "nome": "Em Impressão / Produção",
+    "ordem": 2,
+    "cor": "#3b82f6",
+    "icone": "🖨️"
+  },
+  {
+    "id": 3,
+    "nome": "Acabamento & Corte",
+    "ordem": 3,
+    "cor": "#8b5cf6",
+    "icone": "✂️"
+  },
+  {
+    "id": 4,
+    "nome": "Controle de Qualidade",
+    "ordem": 4,
+    "cor": "#10b981",
+    "icone": "🔍"
+  },
+  {
+    "id": 5,
+    "nome": "Pronto para Retirada",
+    "ordem": 5,
+    "cor": "#22c55e",
+    "icone": "✅"
+  }
+]

@@ -133,12 +133,12 @@ const HistoryModule = {
 
     if (dataInicio && dataFim) {
       lblPeriodo.textContent = dataInicio === dataFim
-        ? `📅 ${formatar(dataInicio)}`
-        : `📅 ${formatar(dataInicio)} até ${formatar(dataFim)}`;
+        ? `${formatar(dataInicio)}`
+        : `${formatar(dataInicio)} até ${formatar(dataFim)}`;
     } else if (dataInicio) {
-      lblPeriodo.textContent = `📅 a partir de ${formatar(dataInicio)}`;
+      lblPeriodo.textContent = `a partir de ${formatar(dataInicio)}`;
     } else {
-      lblPeriodo.textContent = `📅 até ${formatar(dataFim)}`;
+      lblPeriodo.textContent = `até ${formatar(dataFim)}`;
     }
   },
 
@@ -228,7 +228,6 @@ const HistoryModule = {
       tbody.innerHTML = `
         <tr>
           <td colspan="7" class="py-12 text-center text-slate-400">
-            <p class="text-3xl mb-1">🔍</p>
             <p class="text-slate-600 font-medium">Nenhum registro encontrado para o período selecionado.</p>
             <p class="text-xs text-slate-400 mt-1">Tente ajustar o período ou verificar os lançamentos.</p>
           </td>
@@ -250,7 +249,7 @@ const HistoryModule = {
       html += `
         <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors ${isOcorrencia ? 'bg-amber-50/30' : ''}">
           <td class="py-3 px-4 font-semibold text-slate-700 whitespace-nowrap">
-            ${dataFormatada} <span class="text-xs text-slate-400 font-normal ml-1">⏰ ${reg.hora}</span>
+            ${dataFormatada} <span class="text-xs text-slate-400 font-normal ml-1">${reg.hora}</span>
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
             <span class="px-2.5 py-1 rounded-full text-xs font-bold ${turnoBadgeClass}">
@@ -258,7 +257,7 @@ const HistoryModule = {
             </span>
           </td>
           <td class="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
-            👤 ${reg.operador_nome}
+            ${reg.operador_nome}
           </td>
           <td class="py-3 px-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
@@ -275,11 +274,11 @@ const HistoryModule = {
           </td>
           <td class="py-3 px-4 text-center whitespace-nowrap">
             <div class="flex items-center justify-center space-x-2">
-              <button onclick="OperatorModule.abrirModalCorrecao(${reg.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition" title="Editar">
-                ✏️
+              <button onclick="OperatorModule.abrirModalCorrecao(${reg.id})" class="px-2.5 py-1 text-[11px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition" title="Editar lançamento">
+                Editar
               </button>
-              <button onclick="HistoryModule.excluirLancamento(${reg.id})" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-100 rounded-lg transition" title="Excluir">
-                🗑️
+              <button onclick="HistoryModule.excluirLancamento(${reg.id})" class="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition" title="Excluir lançamento">
+                Excluir
               </button>
             </div>
           </td>
@@ -305,11 +304,11 @@ const HistoryModule = {
       </div>
       <div class="flex items-center space-x-2">
         <button onclick="HistoryModule.mudarPagina(${this.paginaAtual - 1})" ${this.paginaAtual <= 1 ? 'disabled' : ''} class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-          ◀ Anterior
+          Anterior
         </button>
-        <span class="text-xs font-bold text-slate-700 px-2">Pág. ${this.paginaAtual} de ${totalPaginas}</span>
+        <span class="text-xs font-bold text-slate-700 px-2">Página ${this.paginaAtual} de ${totalPaginas}</span>
         <button onclick="HistoryModule.mudarPagina(${this.paginaAtual + 1})" ${this.paginaAtual >= totalPaginas ? 'disabled' : ''} class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-          Próxima ▶
+          Próxima
         </button>
       </div>
     `;

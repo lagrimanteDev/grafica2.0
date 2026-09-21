@@ -88,7 +88,6 @@ const DashboardModule = {
       this.renderizarGraficoMateriais(res.graficos.producaoPorMaterial);
       this.renderizarGraficoTurnos(res.graficos.producaoPorTurno);
       this.renderizarGraficoOperadores(res.graficos.producaoPorOperador);
-      this.renderizarGargalos(res.gargalos, res.graficos.producaoPorTurno);
     } catch (error) {
       console.error('Erro ao carregar dashboard:', error);
       App.mostrarToast('Erro ao carregar métricas do dashboard.', 'erro');
@@ -178,9 +177,9 @@ const DashboardModule = {
             <div class="${corBarra} h-2.5 rounded-full" style="width: ${taxa}%"></div>
           </div>
           <div class="flex items-center justify-between text-[10px] text-slate-500">
-            <span>✅ ${cp.noPrazo || 0} no prazo</span>
-            <span>⚠️ ${cp.atrasados || 0} atrasados</span>
-            <span>📦 ${cp.totalConcluidos || 0} concluídos</span>
+            <span> ${cp.noPrazo || 0} no prazo</span>
+            <span> ${cp.atrasados || 0} atrasados</span>
+            <span> ${cp.totalConcluidos || 0} concluídos</span>
           </div>
         </div>
       `;
@@ -212,21 +211,21 @@ const DashboardModule = {
           {
             label: 'Volume Total Produzido',
             data: volumes,
-            backgroundColor: 'rgba(37, 99, 235, 0.75)',
-            borderColor: '#2563eb',
+            backgroundColor: 'rgba(49, 88, 216, 0.75)',
+            borderColor: '#3158D8',
             borderWidth: 1,
             borderRadius: 6,
             yAxisID: 'y'
           },
           {
-            label: 'Total de Lotes/Jobs',
+            label: 'Total de Lotes/Trabalhos',
             data: jobs,
             type: 'line',
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderColor: '#8FA6D9',
+            backgroundColor: 'rgba(143, 166, 217, 0.12)',
             borderWidth: 2,
             pointRadius: 4,
-            pointBackgroundColor: '#10b981',
+            pointBackgroundColor: '#8FA6D9',
             yAxisID: 'y1',
             tension: 0.3
           }
@@ -252,7 +251,7 @@ const DashboardModule = {
             display: true,
             position: 'right',
             grid: { drawOnChartArea: false },
-            title: { display: true, text: 'Qtd. de Jobs' }
+            title: { display: true, text: 'Qtd. de Trabalhos' }
           },
           x: {
             grid: { display: false }
@@ -273,7 +272,9 @@ const DashboardModule = {
 
     const labels = (dados || []).map((d) => d.material_nome);
     const volumes = (dados || []).map((d) => d.total_quantidade);
-    const cores = (dados || []).map((d) => d.cor || '#3b82f6');
+    // Paleta institucional (variações de azul/cinza) para manter o painel limpo
+    const paletaAzul = ['#3158D8', '#2446B8', '#1E3A8A', '#6E8FE8', '#B8CCF7', '#94A3B8', '#CBD5E1'];
+    const cores = (dados || []).map((d, i) => paletaAzul[i % paletaAzul.length]);
 
     this.charts.materiais = new Chart(ctx, {
       type: 'doughnut',
@@ -317,7 +318,6 @@ const DashboardModule = {
 
     const labels = (dados || []).map((d) => d.turno_nome);
     const jobs = (dados || []).map((d) => d.total_jobs);
-    const ocorrencias = (dados || []).map((d) => d.ocorrencias);
 
     this.charts.turnos = new Chart(ctx, {
       type: 'bar',
@@ -325,15 +325,9 @@ const DashboardModule = {
         labels,
         datasets: [
           {
-            label: 'Jobs Concluídos',
+            label: 'Trabalhos Concluídos',
             data: jobs,
-            backgroundColor: '#3b82f6',
-            borderRadius: 6
-          },
-          {
-            label: 'Ocorrências / Paradas',
-            data: ocorrencias,
-            backgroundColor: '#f59e0b',
+            backgroundColor: '#3158D8',
             borderRadius: 6
           }
         ]
@@ -370,9 +364,9 @@ const DashboardModule = {
         labels,
         datasets: [
           {
-            label: 'Total de Jobs Finalizados',
+            label: 'Total de Trabalhos Finalizados',
             data: jobs,
-            backgroundColor: '#8b5cf6',
+            backgroundColor: '#2446B8',
             borderRadius: 6
           }
         ]
@@ -392,51 +386,4 @@ const DashboardModule = {
     });
   },
 
-  // 5. Renderizar Módulo de Identificação de Gargalos
-  renderizarGargalos(gargalos, turnosDados) {
-    const container = document.getElementById('dash-lista-gargalos');
-    if (!container) return;
-
-    const ocorrencias = (gargalos && gargalos.ocorrenciasRecentes) || [];
-
-    if (ocorrencias.length === 0) {
-      container.innerHTML = `
-        <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm flex items-center space-x-3">
-          <span class="text-2xl">🎉</span>
-          <div>
-            <p class="font-bold">Nenhum gargalo ou parada crítica registrada no período.</p>
-            <p class="text-xs text-emerald-600">A produção transcorreu dentro dos padrões de normalidade.</p>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    let html = '<div class="space-y-2.5">';
-    ocorrencias.forEach((oc) => {
-      const [ano, mes, dia] = oc.data.split('-');
-      const dataFormatada = `${dia}/${mes}/${ano}`;
-
-      let tipoBadge = 'bg-amber-100 text-amber-800 border-amber-200';
-      if (oc.tipo_ocorrencia === 'MANUTENCAO') tipoBadge = 'bg-red-100 text-red-800 border-red-200';
-      if (oc.tipo_ocorrencia === 'MATERIAL') tipoBadge = 'bg-purple-100 text-purple-800 border-purple-200';
-
-      html += `
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start justify-between text-xs">
-          <div class="space-y-1">
-            <div class="flex items-center space-x-2">
-              <span class="font-bold px-2 py-0.5 rounded border ${tipoBadge}">${oc.tipo_ocorrencia}</span>
-              <span class="font-semibold text-slate-700">${dataFormatada} às ${oc.hora}</span>
-              <span class="text-slate-400">•</span>
-              <span class="text-slate-600 font-medium">${oc.turno_nome}</span>
-            </div>
-            <p class="text-slate-800 font-medium text-sm mt-1">"${oc.observacoes}"</p>
-            <p class="text-slate-500">Operador: <strong class="text-slate-700">${oc.operador_nome}</strong> | Material: <strong class="text-slate-700">${oc.material_nome}</strong></p>
-          </div>
-        </div>
-      `;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-  }
 };

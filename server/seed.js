@@ -187,12 +187,12 @@ async function seedDatabase(force = false) {
 
   // 7. Etapas de Produção (Kanban)
   await db.runAsync(`DELETE FROM etapas_producao`);
-  await db.runAsync(`INSERT INTO etapas_producao (id, nome, ordem, cor, icone) VALUES
-    (1, 'Aguardando Pré-Impressão', 1, '#f59e0b', '📋'),
-    (2, 'Em Impressão / Produção', 2, '#3b82f6', '🖨️'),
-    (3, 'Acabamento & Corte', 3, '#8b5cf6', '✂️'),
-    (4, 'Controle de Qualidade', 4, '#10b981', '🔍'),
-    (5, 'Pronto para Retirada', 5, '#22c55e', '✅')
+  await db.runAsync(`INSERT INTO etapas_producao (id, nome, ordem, cor) VALUES
+    (1, 'Aguardando Pré-Impressão', 1, '#f59e0b'),
+    (2, 'Em Impressão / Produção', 2, '#3b82f6'),
+    (3, 'Acabamento & Corte', 3, '#8b5cf6'),
+    (4, 'Controle de Qualidade', 4, '#10b981'),
+    (5, 'Pronto para Retirada', 5, '#22c55e')
   `);
 
   // 8. Usuários do sistema

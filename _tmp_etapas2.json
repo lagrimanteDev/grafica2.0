@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "nome": "Aguardando Pré-Impressão",
+    "icone": ""
+  },
+  {
+    "id": 2,
+    "nome": "Em Impressão / Produção",
+    "icone": ""
+  },
+  {
+    "id": 3,
+    "nome": "Acabamento & Corte",
+    "icone": ""
+  },
+  {
+    "id": 4,
+    "nome": "Controle de Qualidade",
+    "icone": ""
+  },
+  {
+    "id": 5,
+    "nome": "Pronto para Retirada",
+    "icone": ""
+  }
+]

@@ -7,8 +7,8 @@ const App = {
     this.setupClock();
     this.setupNavigation();
     this.setupModals();
-    this.setupAccessibility();
     this.setupLogin();
+    this.verificarSessao();
 
     // Inicializar módulos
     await AtendimentoModule.init();
@@ -90,13 +90,20 @@ const App = {
   },
 
   abrirModalLogin() {
-    const modal = document.getElementById('modal-login');
-    if (modal) {
-      modal.classList.remove('hidden');
-      // Pré-selecionar ADMIN por padrão
-      const btnAdmin = document.querySelector('.btn-perfil-login[data-perfil="ADMIN"]');
-      if (btnAdmin) btnAdmin.click();
-    }
+    const loginPage = document.getElementById('login-page');
+    if (loginPage) loginPage.classList.remove('hidden');
+    // Pré-selecionar ADMIN por padrão
+    const btnAdmin = document.querySelector('.btn-perfil-login[data-perfil="ADMIN"]');
+    if (btnAdmin) btnAdmin.click();
+    setTimeout(() => {
+      const emailInput = document.getElementById('login-email');
+      if (emailInput) emailInput.focus();
+    }, 50);
+  },
+
+  fecharLoginPage() {
+    const loginPage = document.getElementById('login-page');
+    if (loginPage) loginPage.classList.add('hidden');
   },
 
   async fazerLogin() {
@@ -139,8 +146,8 @@ const App = {
       if (loginIcon) loginIcon.textContent = '✅';
       if (loginText) loginText.textContent = res.usuario.nome.split(' ')[0];
 
-      // Fechar modal
-      document.getElementById('modal-login').classList.add('hidden');
+      // Fechar página de login
+      this.fecharLoginPage();
 
       // Aplicar permissões de acesso
       this.aplicarPermissoes();
@@ -170,6 +177,9 @@ const App = {
     document.querySelectorAll('.nav-tab-btn').forEach((btn) => {
       btn.classList.remove('hidden');
     });
+
+    // Voltar para a página de login
+    this.abrirModalLogin();
 
     App.mostrarToast('Você saiu do sistema.', 'info');
     this.navegarPara('atendimento');
@@ -222,6 +232,28 @@ const App = {
   verificarSessao() {
     const saved = localStorage.getItem('grafica_epa_usuario');
     if (saved) {
+      try {
+        this.usuarioAtual = JSON.parse(saved);
+        this.fecharLoginPage();
+
+        const btnLogin = document.getElementById('btn-login-usuario');
+        const loginIcon = document.getElementById('login-icon');
+        const loginText = document.getElementById('login-text');
+        if (btnLogin) {
+          btnLogin.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'border-blue-500');
+          btnLogin.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'border-emerald-500');
+        }
+        if (loginIcon) loginIcon.textContent = '✅';
+        if (loginText) loginText.textContent = this.usuarioAtual.nome.split(' ')[0];
+
+        this.aplicarPermissoes();
+      } catch (e) {
+        localStorage.removeItem('grafica_epa_usuario');
+        this.abrirModalLogin();
+      }
+    } else {
+      // Sem sessão salva: exibir a página de login como primeira tela
+      this.abrirModalLogin();
     }
   },
 
@@ -333,20 +365,6 @@ const App = {
         }
       });
     });
-  },
-
-  // Acessibilidade (Modo Chão de Fábrica com Botões Maiores)
-  setupAccessibility() {
-    const btnToggle = document.getElementById('btn-toggle-modo-fabrica');
-    if (btnToggle) {
-      btnToggle.addEventListener('click', () => {
-        document.body.classList.toggle('modo-chao-fabrica');
-        const isAtivo = document.body.classList.contains('modo-chao-fabrica');
-        btnToggle.classList.toggle('bg-amber-100', isAtivo);
-        btnToggle.classList.toggle('text-amber-900', isAtivo);
-        this.mostrarToast(isAtivo ? 'Modo Chão de Fábrica ativado (botões ampliados)' : 'Modo Padrão ativado', 'info');
-      });
-    }
   },
 
   // Health check com backend
