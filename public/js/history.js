@@ -256,19 +256,17 @@ const HistoryModule = {
               ${reg.turno_nome}
             </span>
           </td>
-          <td class="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+          <td class="py-3 px-4 font-medium text-slate-800 truncate" title="${reg.operador_nome || ''}">
             ${reg.operador_nome}
           </td>
-          <td class="py-3 px-4 whitespace-nowrap">
-            <div class="flex items-center space-x-2">
-              <span class="font-bold text-slate-800">${reg.material_nome}</span>
-            </div>
+          <td class="py-3 px-4 truncate" title="${reg.material_nome || ''}">
+            <span class="font-bold text-slate-800">${reg.material_nome}</span>
           </td>
           <td class="py-3 px-4 text-right whitespace-nowrap">
             <span class="text-base font-extrabold text-blue-700">${Number(reg.quantidade).toLocaleString('pt-BR')}</span>
             <span class="text-xs font-semibold text-slate-500 ml-1">${reg.unidade}</span>
           </td>
-          <td class="py-3 px-4 text-xs text-slate-600 max-w-xs truncate">
+          <td class="py-3 px-4 text-xs text-slate-600 truncate" title="${reg.observacoes || ''}">
             ${isOcorrencia ? `<span class="inline-block bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold mr-1">[${reg.tipo_ocorrencia}]</span>` : ''}
             ${reg.observacoes ? reg.observacoes : '<span class="text-slate-300">-</span>'}
           </td>
@@ -389,9 +387,13 @@ const HistoryModule = {
 
   // Excluir Lançamento
   async excluirLancamento(id) {
-    if (!confirm('Tem certeza que deseja excluir permanentemente este lançamento?')) {
-      return;
-    }
+    const ok = await App.confirmar({
+      titulo: 'Excluir Lançamento',
+      mensagem: 'Deseja excluir permanentemente este lançamento? Esta ação não pode ser desfeita.',
+      textoConfirmar: 'Excluir',
+      tipo: 'perigo'
+    });
+    if (!ok) return;
     try {
       await API.producao.excluir(id);
       App.mostrarToast('Lançamento excluído com sucesso.', 'sucesso');

@@ -418,8 +418,9 @@
 
         <div class="flex items-center space-x-2">
           <input type="text" id="kanban-busca" placeholder="Buscar OS, cliente, serviço..." class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 w-56" />
-          <button onclick="KanbanModule.carregarKanban()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
-            🔄 Atualizar
+          <button onclick="KanbanModule.carregarKanban()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+            <span class="leading-none">🔄</span>
+            <span>Atualizar</span>
           </button>
         </div>
       </div>
@@ -458,6 +459,7 @@
             <form id="form-operador-producao" class="space-y-6">
               <input type="hidden" id="op-turno-id" value="1" />
               <input type="hidden" id="op-tipo-ocorrencia" value="NORMAL" />
+              <input type="hidden" id="op-observacoes" value="" />
 
               <!-- 1. SELEÇÃO DE TURNO -->
               <div>
@@ -532,29 +534,10 @@
                 </div>
               </div>
 
-              <!-- 5. OBSERVAÇÕES E OCORRÊNCIAS RÁPIDAS -->
-              <div>
-                <label class="block text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">
-                  5. Observações / Paradas de Máquina (Opcional):
-                </label>
-                <input type="text" id="op-observacoes" placeholder="Ex: Troca de bobina, refile com corte especial..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none transition" />
-                
-                <!-- Tags de Ocorrência Rápida -->
-                <div class="flex flex-wrap gap-1.5 mt-2">
-                  <span class="text-[11px] font-bold text-slate-400 py-1">Atalhos rápidos:</span>
-                  <button type="button" data-texto="Troca de bobina de vinil" data-tipo="MATERIAL" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-purple-100 text-slate-700 hover:text-purple-800 rounded-lg border border-slate-200 transition">🏷️ Troca de Bobina</button>
-                  <button type="button" data-texto="Manutenção / Limpeza de cabeças" data-tipo="MANUTENCAO" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-red-100 text-slate-700 hover:text-red-800 rounded-lg border border-slate-200 transition">🛠️ Limpeza / Manutenção</button>
-                  <button type="button" data-texto="Ajuste de faca de corte e refile" data-tipo="AJUSTE" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 rounded-lg border border-slate-200 transition">✂️ Ajuste de Corte</button>
-                  <button type="button" data-texto="Pedido urgente / Prioridade" data-tipo="URGENCIA" class="btn-tag-ocorrencia text-xs font-semibold px-2.5 py-1 bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-800 rounded-lg border border-slate-200 transition">⚡ Demanda Urgente</button>
-                </div>
-              </div>
-
               <!-- BOTÃO GRANDE DE SUBMISSÃO -->
               <div class="pt-2">
                 <button type="submit" id="btn-op-submit" class="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-600/30 flex items-center justify-center transition font-bold text-lg cursor-pointer transform hover:-translate-y-0.5">
-                  <span class="text-2xl mr-2">✅</span>
                   <span>REGISTRAR PRODUÇÃO</span>
-                  <span class="text-xs bg-emerald-800 text-emerald-100 px-2 py-0.5 rounded ml-3 hidden sm:inline">Enter</span>
                 </button>
               </div>
 
@@ -662,7 +645,16 @@
         </div>
 
         <div class="overflow-x-auto">
-          <table class="quadro-table w-full text-left text-xs sm:text-sm">
+          <table class="quadro-table w-full text-left text-xs sm:text-sm table-fixed min-w-[980px]">
+            <colgroup>
+              <col style="width: 14%" />
+              <col style="width: 11%" />
+              <col style="width: 15%" />
+              <col style="width: 16%" />
+              <col style="width: 9%" />
+              <col style="width: 21%" />
+              <col style="width: 14%" />
+            </colgroup>
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[11px] tracking-wider">
               <tr>
                 <th class="py-3 px-4">Data / Hora</th>
@@ -898,19 +890,20 @@
                 </h3>
                 <p class="text-xs text-slate-500">Categorias disponíveis no formulário de atendimento</p>
               </div>
+              <button onclick="SettingsModule.abrirCadastro('servico')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                Adicionar Serviço
+              </button>
             </div>
 
-            <form id="form-novo-servico" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-              <input type="text" id="serv-nome" placeholder="Nome do Serviço (ex: Placas em PS)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="text" id="serv-unidade" placeholder="Unidade (m², Milheiros, un)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="text" id="serv-categoria" placeholder="Categoria (Opcional)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
-                + Adicionar
-              </button>
-            </form>
-
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs table-fixed min-w-[680px]">
+                <colgroup>
+                  <col style="width: 30%" />
+                  <col style="width: 16%" />
+                  <col style="width: 20%" />
+                  <col style="width: 12%" />
+                  <col style="width: 22%" />
+                </colgroup>
                 <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
                   <tr>
                     <th class="py-2 px-3">Serviço</th>
@@ -932,22 +925,22 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 class="font-extrabold text-slate-900 text-base flex items-center space-x-2">
-                  <span>✂️</span>
                   <span>Acabamentos</span>
                 </h3>
                 <p class="text-xs text-slate-500">Opções de acabamento no formulário de atendimento</p>
               </div>
+              <button onclick="SettingsModule.abrirCadastro('acabamento')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                Adicionar Acabamento
+              </button>
             </div>
 
-            <form id="form-novo-acabamento" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-              <input type="text" id="acab-nome" placeholder="Nome do Acabamento (ex: Ilhós)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
-                + Adicionar
-              </button>
-            </form>
-
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs table-fixed min-w-[440px]">
+                <colgroup>
+                  <col style="width: 46%" />
+                  <col style="width: 20%" />
+                  <col style="width: 34%" />
+                </colgroup>
                 <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
                   <tr>
                     <th class="py-2 px-3">Acabamento</th>
@@ -971,24 +964,20 @@
                 </h3>
                 <p class="text-xs text-slate-500">Contas de atendentes, operadores e administradores</p>
               </div>
+              <button onclick="SettingsModule.abrirCadastro('usuario')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                Adicionar Usuário
+              </button>
             </div>
 
-            <form id="form-novo-usuario" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-5 gap-2 text-xs">
-              <input type="text" id="user-nome" placeholder="Nome Completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="email" id="user-email" placeholder="E-mail" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="password" id="user-senha" placeholder="Senha" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <select id="user-perfil" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-semibold text-slate-800">
-                <option value="ATENDIMENTO">Atendimento</option>
-                <option value="OPERADOR">Operador</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
-                + Adicionar
-              </button>
-            </form>
-
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs table-fixed min-w-[720px]">
+                <colgroup>
+                  <col style="width: 24%" />
+                  <col style="width: 30%" />
+                  <col style="width: 16%" />
+                  <col style="width: 12%" />
+                  <col style="width: 18%" />
+                </colgroup>
                 <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
                   <tr>
                     <th class="py-2 px-3">Nome</th>
@@ -1014,20 +1003,20 @@
                 </h3>
                 <p class="text-xs text-slate-500">Tipos de impressos e produtos da gráfica</p>
               </div>
+              <button onclick="SettingsModule.abrirCadastro('material')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                Adicionar Material
+              </button>
             </div>
 
-            <form id="form-novo-material" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-              <input type="text" id="mat-nome" placeholder="Nome do Material (ex: Banner)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="text" id="mat-unidade" placeholder="Unidade (m², Milheiros, un)" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="text" id="mat-categoria" placeholder="Categoria (Opcional)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="hidden" id="mat-meta" value="0" />
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
-                + Adicionar
-              </button>
-            </form>
-
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs table-fixed min-w-[680px]">
+                <colgroup>
+                  <col style="width: 30%" />
+                  <col style="width: 16%" />
+                  <col style="width: 20%" />
+                  <col style="width: 12%" />
+                  <col style="width: 22%" />
+                </colgroup>
                 <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
                   <tr>
                     <th class="py-2 px-3">Material</th>
@@ -1053,23 +1042,20 @@
                 </h3>
                 <p class="text-xs text-slate-500">Colaboradores do chão de fábrica</p>
               </div>
+              <button onclick="SettingsModule.abrirCadastro('operador')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                Adicionar Operador
+              </button>
             </div>
 
-            <form id="form-novo-operador" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-              <input type="text" id="op-novo-nome" placeholder="Nome Completo" required class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <input type="text" id="op-novo-cargo" placeholder="Cargo / Função" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800" />
-              <select id="op-novo-turno" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-semibold text-slate-800">
-                <option value="1">1º Turno (Manhã)</option>
-                <option value="2">2º Turno (Tarde)</option>
-                <option value="3">3º Turno (Noite)</option>
-              </select>
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-1.5 px-3 shadow-sm transition">
-                + Adicionar
-              </button>
-            </form>
-
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs table-fixed min-w-[680px]">
+                <colgroup>
+                  <col style="width: 28%" />
+                  <col style="width: 20%" />
+                  <col style="width: 18%" />
+                  <col style="width: 12%" />
+                  <col style="width: 22%" />
+                </colgroup>
                 <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px]">
                   <tr>
                     <th class="py-2 px-3">Nome</th>
@@ -1292,6 +1278,54 @@
         </div>
       </form>
 
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL GENÉRICO DE CONFIRMAÇÃO -->
+  <!-- ========================================== -->
+  <div id="modal-confirmacao" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 fade-in">
+      <div>
+        <h3 id="modal-confirmacao-titulo" class="text-base font-extrabold text-slate-900">Confirmar</h3>
+        <p id="modal-confirmacao-mensagem" class="text-sm text-slate-600 mt-1">Deseja continuar?</p>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button type="button" class="modal-close-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+          Cancelar
+        </button>
+        <button type="button" id="btn-confirmacao-ok" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow transition">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL GENÉRICO DE CADASTRO (INCLUIR / EDITAR) -->
+  <!-- ========================================== -->
+  <div id="modal-cadastro" class="modal-container fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 fade-in max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modal-cadastro-titulo" class="text-base font-extrabold text-slate-900">Cadastro</h3>
+        <button type="button" class="modal-close-btn p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">✕</button>
+      </div>
+
+      <form id="form-cadastro" class="space-y-3 text-xs">
+        <div id="modal-cadastro-campos" class="space-y-3">
+          <!-- Campos inseridos dinamicamente via JS -->
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button type="button" class="modal-close-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-salvar-cadastro" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition">
+            Salvar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

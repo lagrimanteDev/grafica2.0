@@ -66,6 +66,22 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/materiais/:id/status - Ativar/Desativar material
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const ativo = Number(req.body.ativo) === 1 ? 1 : 0;
+    const result = await db.runAsync('UPDATE materiais SET ativo = ? WHERE id = ?', [ativo, id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Material não encontrado.' });
+    }
+    res.json({ message: ativo === 1 ? 'Material ativado com sucesso!' : 'Material desativado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao alterar status do material:', error);
+    res.status(500).json({ error: 'Erro ao alterar status do material.' });
+  }
+});
+
 // DELETE /api/materiais/:id - Desativar/Excluir material
 router.delete('/:id', async (req, res) => {
   try {

@@ -44,6 +44,7 @@ const API = {
     listar: (todos = false) => API.request(`/materiais?todos=${todos}`),
     criar: (dados) => API.request('/materiais', { method: 'POST', body: JSON.stringify(dados) }),
     atualizar: (id, dados) => API.request(`/materiais/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+    status: (id, ativo) => API.request(`/materiais/${id}/status`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
     excluir: (id) => API.request(`/materiais/${id}`, { method: 'DELETE' })
   },
 
@@ -52,6 +53,7 @@ const API = {
     listar: (todos = false) => API.request(`/operadores?todos=${todos}`),
     criar: (dados) => API.request('/operadores', { method: 'POST', body: JSON.stringify(dados) }),
     atualizar: (id, dados) => API.request(`/operadores/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+    status: (id, ativo) => API.request(`/operadores/${id}/status`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
     excluir: (id) => API.request(`/operadores/${id}`, { method: 'DELETE' }),
     listarTurnos: () => API.request('/operadores/turnos/lista')
   },
@@ -125,6 +127,7 @@ const API = {
     listar: (todos = false) => API.request(`/usuarios?todos=${todos}`),
     criar: (dados) => API.request('/usuarios', { method: 'POST', body: JSON.stringify(dados) }),
     atualizar: (id, dados) => API.request(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+    status: (id, ativo) => API.request(`/usuarios/${id}/status`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
     excluir: (id) => API.request(`/usuarios/${id}`, { method: 'DELETE' }),
     login: (dados) => API.request('/usuarios/login', { method: 'POST', body: JSON.stringify(dados) })
   },
@@ -143,6 +146,7 @@ const API = {
     listar: (todos = false) => API.request(`/servicos?todos=${todos}`),
     criar: (dados) => API.request('/servicos', { method: 'POST', body: JSON.stringify(dados) }),
     atualizar: (id, dados) => API.request(`/servicos/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+    status: (id, ativo) => API.request(`/servicos/${id}/status`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
     excluir: (id) => API.request(`/servicos/${id}`, { method: 'DELETE' })
   },
 
@@ -151,6 +155,7 @@ const API = {
     listar: (todos = false) => API.request(`/acabamentos?todos=${todos}`),
     criar: (dados) => API.request('/acabamentos', { method: 'POST', body: JSON.stringify(dados) }),
     atualizar: (id, dados) => API.request(`/acabamentos/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+    status: (id, ativo) => API.request(`/acabamentos/${id}/status`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
     excluir: (id) => API.request(`/acabamentos/${id}`, { method: 'DELETE' })
   }
 };

@@ -20,12 +20,13 @@ const OperatorModule = {
     const dataInput = document.getElementById('op-data');
     const horaInput = document.getElementById('op-hora');
     const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
 
     if (dataInput) {
-      dataInput.value = now.toISOString().slice(0, 10);
+      // Data local (evita o deslocamento de fuso do toISOString/UTC)
+      dataInput.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     }
     if (horaInput) {
-      const pad = (n) => String(n).padStart(2, '0');
       horaInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     }
   },
@@ -285,6 +286,9 @@ const OperatorModule = {
 
   // Salvar Lançamento
   async salvarLancamento() {
+    // Captura a data/hora exata do clique em "Registrar Produção"
+    this.setupDateAndTime();
+
     const turnoId = document.getElementById('op-turno-id').value;
     const operadorId = document.getElementById('op-operador-id').value;
     const materialId = this.selectedMaterialId;
@@ -409,7 +413,7 @@ const OperatorModule = {
         }
 
         // Status do pedido
-        let statusBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800">En Produção</span>';
+        let statusBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800">Em Produção</span>';
         if (ped.status === 'CANCELADO') {
           statusBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-800">Cancelado</span>';
         } else if (ped.concluido_em) {
@@ -429,7 +433,10 @@ const OperatorModule = {
             <div class="text-xs text-slate-500 mt-0.5">${ped.servico_nome} • ${ped.quantidade} ${ped.unidade}</div>
             <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
               <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">${ped.etapa_nome}</span>
-              <span class="text-[10px] text-slate-400">📅 Entrega: ${dataFormatada}</span>
+              <span class="inline-flex items-center gap-1 text-[10px] text-slate-400">
+                <span class="leading-none">📅</span>
+                <span>Entrega: ${dataFormatada}</span>
+              </span>
             </div>
             <div class="flex items-center justify-end gap-2 mt-2">
               <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="px-3 py-1.5 bg-white border border-[#D0D5DD] text-[#344054] hover:border-[#3158D8] hover:text-[#3158D8] rounded-lg text-xs font-bold transition">
@@ -480,9 +487,13 @@ const OperatorModule = {
 
   // Excluir Lançamento
   async excluirLancamento(id) {
-    if (!confirm('Deseja realmente excluir este lançamento de produção?')) {
-      return;
-    }
+    const ok = await App.confirmar({
+      titulo: 'Excluir Lançamento',
+      mensagem: 'Deseja realmente excluir este lançamento de produção? Esta ação não pode ser desfeita.',
+      textoConfirmar: 'Excluir',
+      tipo: 'perigo'
+    });
+    if (!ok) return;
     try {
       await API.producao.excluir(id);
       App.mostrarToast('Lançamento excluído com sucesso.', 'sucesso');

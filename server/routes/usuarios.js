@@ -72,6 +72,22 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/usuarios/:id/status - Ativar/Desativar usuário
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const ativo = Number(req.body.ativo) === 1 ? 1 : 0;
+    const result = await db.runAsync('UPDATE usuarios SET ativo = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [ativo, id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    res.json({ message: ativo === 1 ? 'Usuário ativado com sucesso!' : 'Usuário desativado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao alterar status do usuário:', error);
+    res.status(500).json({ error: 'Erro ao alterar status do usuário.' });
+  }
+});
+
 // DELETE /api/usuarios/:id - Desativar/Excluir usuário
 router.delete('/:id', async (req, res) => {
   try {

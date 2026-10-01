@@ -64,6 +64,22 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/servicos/:id/status - Ativar/Desativar serviço
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const ativo = Number(req.body.ativo) === 1 ? 1 : 0;
+    const result = await db.runAsync('UPDATE servicos SET ativo = ? WHERE id = ?', [ativo, id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Serviço não encontrado.' });
+    }
+    res.json({ message: ativo === 1 ? 'Serviço ativado com sucesso!' : 'Serviço desativado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao alterar status do serviço:', error);
+    res.status(500).json({ error: 'Erro ao alterar status do serviço.' });
+  }
+});
+
 // DELETE /api/servicos/:id - Desativar/Excluir serviço
 router.delete('/:id', async (req, res) => {
   try {

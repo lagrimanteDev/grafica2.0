@@ -350,12 +350,15 @@ const App = {
 
   // Sistema de Modais
   setupModals() {
-    // Fechar ao clicar no botão X ou overlay
-    document.querySelectorAll('.modal-close-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
+    // Fechar ao clicar no botão X (delegação de eventos: funciona também para
+    // botões inseridos dinamicamente dentro dos modais, ex.: botão "Fechar" do
+    // modal de detalhes do pedido no Kanban)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.modal-close-btn');
+      if (btn) {
         const modal = btn.closest('.modal-container');
         if (modal) modal.classList.add('hidden');
-      });
+      }
     });
 
     document.querySelectorAll('.modal-container').forEach((modal) => {
@@ -364,6 +367,53 @@ const App = {
           modal.classList.add('hidden');
         }
       });
+    });
+  },
+
+  // Modal genérico de confirmação (utilizado por todas as ações de excluir/desativar)
+  // Retorna uma Promise<boolean>: true = confirmado, false = cancelado.
+  confirmar({ titulo = 'Confirmar', mensagem = 'Deseja continuar?', textoConfirmar = 'Confirmar', textoCancelar = 'Cancelar', tipo = 'perigo' } = {}) {
+    return new Promise((resolve) => {
+      const modal = document.getElementById('modal-confirmacao');
+      const tituloEl = document.getElementById('modal-confirmacao-titulo');
+      const mensagemEl = document.getElementById('modal-confirmacao-mensagem');
+      const btnOk = document.getElementById('btn-confirmacao-ok');
+      const btnCancelar = modal ? modal.querySelector('.modal-close-btn') : null;
+
+      // Fallback caso o modal não exista na página
+      if (!modal || !btnOk) {
+        resolve(window.confirm(mensagem.replace(/<[^>]*>/g, '')));
+        return;
+      }
+
+      if (tituloEl) tituloEl.textContent = titulo;
+      if (mensagemEl) mensagemEl.innerHTML = mensagem;
+      if (btnCancelar) btnCancelar.textContent = textoCancelar;
+      btnOk.textContent = textoConfirmar;
+      // Estilo do botão de confirmação conforme o tipo de ação
+      btnOk.className = tipo === 'perigo'
+        ? 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow transition'
+        : 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow transition';
+
+      const finalizar = (resultado) => {
+        modal.classList.add('hidden');
+        btnOk.removeEventListener('click', aoConfirmar);
+        if (btnCancelar) btnCancelar.removeEventListener('click', aoCancelar);
+        modal.removeEventListener('click', aoOverlay);
+        resolve(resultado);
+      };
+
+      const aoConfirmar = () => finalizar(true);
+      const aoCancelar = () => finalizar(false);
+      const aoOverlay = (e) => {
+        if (e.target === modal) finalizar(false);
+      };
+
+      btnOk.addEventListener('click', aoConfirmar);
+      if (btnCancelar) btnCancelar.addEventListener('click', aoCancelar);
+      modal.addEventListener('click', aoOverlay);
+
+      modal.classList.remove('hidden');
     });
   },
 

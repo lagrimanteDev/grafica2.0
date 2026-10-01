@@ -64,6 +64,22 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/acabamentos/:id/status - Ativar/Desativar acabamento
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const ativo = Number(req.body.ativo) === 1 ? 1 : 0;
+    const result = await db.runAsync('UPDATE acabamentos SET ativo = ? WHERE id = ?', [ativo, id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Acabamento não encontrado.' });
+    }
+    res.json({ message: ativo === 1 ? 'Acabamento ativado com sucesso!' : 'Acabamento desativado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao alterar status do acabamento:', error);
+    res.status(500).json({ error: 'Erro ao alterar status do acabamento.' });
+  }
+});
+
 // DELETE /api/acabamentos/:id - Desativar/Excluir acabamento
 router.delete('/:id', async (req, res) => {
   try {

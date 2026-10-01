@@ -114,10 +114,10 @@ const KanbanModule = {
     let prioridadeLabel = '';
     if (ped.prioridade === 'URGENTE' || diffDias < 0) {
       prioridadeClass = 'border-l-4 border-l-red-500';
-      prioridadeLabel = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800">🔴 Atrasado</span>';
+      prioridadeLabel = '<span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800"><span class="leading-none">🔴</span><span>Atrasado</span></span>';
     } else if (ped.prioridade === 'ALTA' || diffDias === 0) {
       prioridadeClass = 'border-l-4 border-l-amber-500';
-      prioridadeLabel = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">🟡 Hoje</span>';
+      prioridadeLabel = '<span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800"><span class="leading-none">🟡</span><span>Hoje</span></span>';
     }
 
     const [ano, mes, dia] = (ped.data_prometida || '').split('-');
@@ -132,10 +132,16 @@ const KanbanModule = {
         ${prioridadeLabel}
       </div>
       <div class="text-[11px] text-slate-600 font-medium">${ped.servico_nome}</div>
-      <div class="text-[11px] text-slate-500 mt-0.5">📦 ${ped.quantidade} ${ped.unidade}</div>
-      <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-        <span class="text-[10px] font-bold text-slate-400">📅 ${dataFormatada}</span>
-        <div class="flex items-center space-x-1">
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1">
+        <span class="leading-none">📦</span>
+        <span>${ped.quantidade} ${ped.unidade}</span>
+      </div>
+      <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100">
+        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400">
+          <span class="leading-none">📅</span>
+          <span>${dataFormatada}</span>
+        </span>
+        <div class="flex items-center gap-1">
           <button onclick="KanbanModule.abrirDetalhes(${ped.id})" class="px-2 py-1 text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition" title="Visualizar pedido">
             Visualizar
           </button>
@@ -260,9 +266,13 @@ const KanbanModule = {
     const pedido = this.pedidosCache.find((p) => p.id === pedidoId);
     if (!pedido) return;
 
-    if (!confirm(`Tem certeza que deseja excluir o pedido ${pedido.numero_os}?\nO pedido será marcado como CANCELADO e removido do quadro.`)) {
-      return;
-    }
+    const ok = await App.confirmar({
+      titulo: 'Excluir Pedido',
+      mensagem: `Deseja excluir o pedido <strong>${pedido.numero_os}</strong> de <strong>${pedido.cliente_nome}</strong>?<br><span class="text-slate-500">O pedido será marcado como CANCELADO e removido do quadro.</span>`,
+      textoConfirmar: 'Excluir',
+      tipo: 'perigo'
+    });
+    if (!ok) return;
 
     try {
       const usuario = App.usuarioAtual || {};
@@ -548,7 +558,7 @@ const KanbanModule = {
 
         <div class="flex items-center justify-end space-x-2 pt-2">
           <button onclick="KanbanModule.imprimirPedido()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition">
-            🖨️ Imprimir Pedido
+            Imprimir Pedido
           </button>
           <button type="button" class="modal-close-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition">
             Fechar
