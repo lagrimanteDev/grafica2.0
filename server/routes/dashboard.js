@@ -156,32 +156,35 @@ router.get('/metricas', async (req, res) => {
       pedidoParams.push(data_fim);
     }
 
+    // Mesma base, mas ignorando pedidos CANCELADOS nas métricas financeiras
+    const pedidoWhereAtivo = pedidoWhere + " AND ped.status != 'CANCELADO'";
+
     // KPIs Comerciais
     const kpisComerciais = await db.getAsync(
       `SELECT 
         COUNT(*) as total_pedidos,
         SUM(CASE WHEN ped.status = 'ATIVO' THEN 1 ELSE 0 END) as pedidos_ativos,
         SUM(CASE WHEN ped.status = 'CANCELADO' THEN 1 ELSE 0 END) as pedidos_cancelados,
-        SUM(CASE WHEN ped.status_pagamento = 'PAGO' THEN ped.valor_total ELSE 0 END) as faturamento_pago,
-        SUM(ped.valor_total) as faturamento_total,
-        ROUND(AVG(CASE WHEN ped.valor_total > 0 THEN ped.valor_total END), 2) as ticket_medio
+        SUM(CASE WHEN ped.status = 'PAGO' OR ped.status_pagamento = 'PAGO' THEN ped.valor_total ELSE 0 END) as faturamento_pago,
+        SUM(CASE WHEN ped.status != 'CANCELADO' THEN ped.valor_total ELSE 0 END) as faturamento_total,
+        ROUND(AVG(CASE WHEN ped.status != 'CANCELADO' AND ped.valor_total > 0 THEN ped.valor_total END), 2) as ticket_medio
        FROM pedidos ped ${pedidoWhere}`,
       pedidoParams
     );
 
-    // Pedidos por dia
+    // Pedidos por dia (apenas pedidos não cancelados)
     const pedidosPorDia = await db.allAsync(
       `SELECT 
         DATE(ped.created_at) as data,
         COUNT(*) as total_pedidos,
         SUM(ped.valor_total) as faturamento
-       FROM pedidos ped ${pedidoWhere}
+       FROM pedidos ped ${pedidoWhereAtivo}
        GROUP BY DATE(ped.created_at)
        ORDER BY data ASC`,
       pedidoParams
     );
 
-    // Pedidos por serviço
+    // Pedidos por serviço (apenas pedidos não cancelados)
     const pedidosPorServico = await db.allAsync(
       `SELECT 
         s.id,
@@ -191,7 +194,7 @@ router.get('/metricas', async (req, res) => {
         SUM(ped.quantidade) as total_quantidade,
         SUM(ped.valor_total) as faturamento
        FROM servicos s
-       LEFT JOIN pedidos ped ON ped.servico_id = s.id ${data_inicio ? ' AND DATE(ped.created_at) >= ?' : ''} ${data_fim ? ' AND DATE(ped.created_at) <= ?' : ''}
+       LEFT JOIN pedidos ped ON ped.servico_id = s.id AND ped.status != 'CANCELADO' ${data_inicio ? ' AND DATE(ped.created_at) >= ?' : ''} ${data_fim ? ' AND DATE(ped.created_at) <= ?' : ''}
        WHERE s.ativo = 1
        GROUP BY s.id
        ORDER BY total_pedidos DESC`,

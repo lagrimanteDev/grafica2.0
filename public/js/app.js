@@ -209,12 +209,15 @@ const App = {
         // Admin: acesso a tudo
         // Nada a ocultar
       } else if (perfil === 'ATENDIMENTO') {
-        // Atendimento: Atendimento, Kanban, Histórico
-        if (tabId !== 'atendimento' && tabId !== 'kanban' && tabId !== 'historico') {
+        // Atendimento: Atendimento, Kanban, Histórico, Equipe
+        if (tabId !== 'atendimento' && tabId !== 'kanban' && tabId !== 'historico' && tabId !== 'equipe') {
           tab.classList.add('hidden');
         }
       }
     });
+
+    // Restringe edição de data/hora ao perfil ADMIN
+    this.aplicarRestricaoDataHora();
 
     // Navegar para a aba inicial do perfil
     if (perfil === 'VENDEDOR') {
@@ -227,6 +230,48 @@ const App = {
       this.navegarPara('atendimento');
     }
   },
+
+  // Verifica se o usuário logado é administrador
+  ehAdministrador() {
+    return !!(this.usuarioAtual && this.usuarioAtual.perfil === 'ADMIN');
+  },
+
+  // Libera a edição de data/hora somente para administradores.
+  // Para os demais perfis, os campos ficam somente-leitura (com visual de bloqueio).
+  aplicarRestricaoDataHora() {
+    const isAdmin = this.ehAdministrador();
+
+    // Campos de data/hora de entrada/edição de registros
+    const camposDataHora = [
+      'op-data', 'op-hora',                    // Lançamento Rápido
+      'edit-data', 'edit-hora',                // Modal de correção de lançamento
+      'ped-data-prometida', 'ped-hora-prometida' // Prazo de entrega (Atendimento)
+    ];
+
+    camposDataHora.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      // disabled bloqueia a edição do usuário (date/time). Como o sistema lê o
+      // valor via .value e envia por fetch/FormData, o registro continua funcionando.
+      el.disabled = !isAdmin;
+      el.readOnly = false;
+
+      if (isAdmin) {
+        el.classList.remove('campo-bloqueado');
+        el.title = '';
+      } else {
+        el.classList.add('campo-bloqueado');
+        el.title = 'Somente o administrador pode editar data/hora';
+      }
+    });
+
+    // Avisos ao lado dos campos bloqueados (visível apenas para não-admin)
+    document.querySelectorAll('[data-aviso-datahora]').forEach((aviso) => {
+      aviso.classList.toggle('hidden', isAdmin);
+    });
+  },
+
 
   // Verificar login ao iniciar (restaurar sessão)
   verificarSessao() {
@@ -343,6 +388,8 @@ const App = {
       HistoryModule.init();
     } else if (tabId === 'dashboard') {
       DashboardModule.init();
+    } else if (tabId === 'equipe') {
+      EquipeModule.init();
     } else if (tabId === 'configuracoes') {
       SettingsModule.init();
     }
